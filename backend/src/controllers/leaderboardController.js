@@ -4,6 +4,30 @@ const Completion = require('../models/completionModel')
 const { calcStreak, isScheduled, addDays, getEffectiveToday, mondayOfWeekContaining, getScheduledDates } = require('../utils/streakUtils')
 
 let leaderboardCache = { data: null, expires: 0 }
+let landingStatsCache = { data: null, expires: 0 }
+let leaderboardPromise = null
+
+async function getCachedLeaderboard() {
+  if (leaderboardCache.data?.length && Date.now() < leaderboardCache.expires) {
+    return leaderboardCache.data
+  }
+  if (leaderboardPromise) {
+    return leaderboardPromise
+  }
+  leaderboardPromise = buildLeaderboard()
+    .then((data) => {
+      if (data && data.length) {
+        leaderboardCache = { data, expires: Date.now() + 10 * 60 * 1000 }
+      }
+      leaderboardPromise = null
+      return data
+    })
+    .catch((err) => {
+      leaderboardPromise = null
+      throw err
+    })
+  return leaderboardPromise
+}
 
 function habitCategory(name = '') {
   const n = name.toLowerCase()
@@ -80,16 +104,10 @@ async function buildLeaderboard() {
 
 exports.getLeaderboard = async (req, res) => {
   try {
-    if (leaderboardCache.data?.length && Date.now() < leaderboardCache.expires) {
-      return res.json(leaderboardCache.data)
-    }
     const data = await Promise.race([
-      buildLeaderboard(),
+      getCachedLeaderboard(),
       new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 12000)),
     ])
-    if (data.length) {
-      leaderboardCache = { data, expires: Date.now() + 10 * 60 * 1000 }
-    }
     res.json(data)
   } catch (e) {
     console.error('getLeaderboard error:', e.message)
@@ -310,22 +328,42 @@ exports.getSummary = async (req, res) => {
 
 exports.getLandingStats = async (req, res) => {
   try {
-    const [leaderboard, habits, completions] = await Promise.all([
-      Promise.race([
-        buildLeaderboard(),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000)),
-      ]).catch(() => leaderboardCache.data || []),
+    if (landingStatsCache.data && Date.now() < landingStatsCache.expires) {
+      return res.json(landingStatsCache.data)
+    }
+
+    let leaderboard = []
+    try {
+      leaderboard = await Promise.race([
+        getCachedLeaderboard(),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000)),
+      ])
+    } catch (err) {
+      console.warn('getLandingStats getCachedLeaderboard failed or timed out:', err.message)
+      leaderboard = leaderboardCache.data || []
+    }
+
+    const [habits, completions] = await Promise.all([
       Habit.countDocuments({ isArchived: false }).maxTimeMS(5000),
       Completion.countDocuments({ isDone: true }).maxTimeMS(5000),
     ])
-    res.json({
+
+    const data = {
       habitsTracked: habits,
       activeStreaks: leaderboard.filter((r) => r.streak > 0).length,
       longestStreak: leaderboard[0]?.streak || 0,
       totalCompletions: completions,
-    })
+    }
+
+    // Cache landing stats for 5 minutes
+    landingStatsCache = { data, expires: Date.now() + 5 * 60 * 1000 }
+
+    res.json(data)
   } catch (e) {
     console.error('getLandingStats error:', e.message)
+    if (landingStatsCache.data) {
+      return res.json(landingStatsCache.data)
+    }
     res.status(500).json({ message: e.message })
   }
 }

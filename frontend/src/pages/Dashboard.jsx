@@ -105,6 +105,21 @@ export default function Dashboard() {
 
   useEffect(() => {
     let cancelled = false
+
+    const handleCacheUpdate = (e) => {
+      if (cancelled) return
+      const { url, data } = e.detail
+      if (url === '/habits/today' || url.endsWith('/habits/today')) {
+        setHabits(Array.isArray(data) ? data : [])
+      } else if (url === '/stats/summary' || url.endsWith('/stats/summary')) {
+        setSummary(data || null)
+      } else if (url === '/stats/weekly' || url.endsWith('/stats/weekly')) {
+        setWeekly(data || {})
+      }
+    }
+
+    window.addEventListener('api-cache-update', handleCacheUpdate)
+
     ;(async () => {
       setLoading(true)
       setError('')
@@ -144,7 +159,10 @@ export default function Dashboard() {
         }
       }
     })()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+      window.removeEventListener('api-cache-update', handleCacheUpdate)
+    }
   }, [])
 
   const done  = habits.filter((h) => h.isDone).length
@@ -179,14 +197,38 @@ export default function Dashboard() {
   const lbTeaser = leaderboard.slice(0, 3)
 
   const toggle = async (habit) => {
+    const prevHabits = [...habits]
+    const nextIsDone = !habit.isDone
+
+    // Optimistic UI updates
+    const inputAmt = amounts[habit._id]
+    const targetAmt = inputAmt !== undefined && inputAmt !== '' ? Number(inputAmt) : Number(habit.target || 1)
+    const nextAmt = nextIsDone ? (habit.type === 'yesno' ? 1 : targetAmt) : 0
+
+    setHabits((prev) =>
+      prev.map((h) =>
+        h._id === habit._id
+          ? {
+              ...h,
+              isDone: nextIsDone,
+              actualAmount: nextAmt,
+              currentStreak: nextIsDone
+                ? (h.currentStreak || 0) + 1
+                : Math.max(0, (h.currentStreak || 1) - 1),
+            }
+          : h
+      )
+    )
+
+    if (!nextIsDone) {
+      setAmounts((p) => ({ ...p, [habit._id]: '' }))
+    }
+
     try {
       if (habit.isDone) {
         await habitService.uncomplete(habit._id, {})
-        setAmounts((p) => ({ ...p, [habit._id]: '' }))
         toast?.info?.(`Unchecked: ${habit.name}`)
       } else {
-        const amt = amounts[habit._id] !== undefined ? amounts[habit._id] : habit.actualAmount
-        const targetAmt = Number(amt || habit.target)
         await habitService.complete(habit._id, {
           actualAmount: habit.type === 'yesno' ? 1 : targetAmt,
         })
@@ -196,8 +238,9 @@ export default function Dashboard() {
           toast?.info?.(`Progress logged for ${habit.name}: ${formatValue(targetAmt, habit.type)}/${formatValue(habit.target, habit.type)}`)
         }
       }
-      load()
     } catch (err) {
+      // Revert on error
+      setHabits(prevHabits)
       toast?.error?.(err.response?.data?.message || 'Could not update habit')
     }
   }
@@ -205,8 +248,80 @@ export default function Dashboard() {
   if (loading) {
     return (
       <PageContent>
-        <div className="flex items-center justify-center h-48 sm:h-64">
-          <p className="text-[#9A8070] text-sm">Loading dashboard...</p>
+        <div className="animate-pulse space-y-6">
+          {/* Header Skeleton */}
+          <header className="mb-5 space-y-2">
+            <div className="h-7 w-48 bg-[#F2EDE6] rounded-lg" />
+            <div className="h-4 w-32 bg-[#F2EDE6] rounded-md" />
+          </header>
+
+          {/* Quote Skeleton */}
+          <div className="h-14 bg-[#F2EDE6]/40 rounded-2xl border-l-[3px] border-[#C4A882] flex items-center px-4" />
+
+          {/* Row 1 Skeleton: Today's Progress + Day Streak */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2 bg-[#F2EDE6]/20 border border-[rgba(100,80,60,0.08)] rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 h-36">
+              <div className="space-y-2 flex-1 w-full text-center sm:text-left">
+                <div className="h-5 w-40 bg-[#F2EDE6] rounded-md mx-auto sm:mx-0" />
+                <div className="h-4 w-56 bg-[#F2EDE6] rounded-md mx-auto sm:mx-0" />
+              </div>
+              <div className="w-[120px] h-[120px] rounded-full border-[9px] border-[#F2EDE6] flex items-center justify-center shrink-0" />
+            </div>
+            <div className="bg-[#F2EDE6]/20 border border-[rgba(100,80,60,0.08)] rounded-2xl p-5 flex flex-col items-center justify-center gap-2 h-36">
+              <div className="h-8 w-8 bg-[#F2EDE6] rounded-full" />
+              <div className="h-9 w-16 bg-[#F2EDE6] rounded-md" />
+              <div className="h-3 w-20 bg-[#F2EDE6] rounded-md" />
+            </div>
+          </div>
+
+          {/* Row 2 Skeleton: Habits list + Right panel */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Habits Card Skeleton */}
+            <div className="md:col-span-2 bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl p-5 space-y-4">
+              <div className="flex justify-between items-center mb-2">
+                <div className="h-4 w-24 bg-[#F2EDE6] rounded-md" />
+                <div className="h-4 w-16 bg-[#F2EDE6] rounded-md" />
+              </div>
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center justify-between gap-4 p-3.5 border border-[rgba(100,80,60,0.08)] rounded-xl">
+                  <div className="w-10 h-10 rounded-xl bg-[#F2EDE6] shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-32 bg-[#F2EDE6] rounded-md" />
+                    <div className="h-3 w-24 bg-[#F2EDE6] rounded-md" />
+                  </div>
+                  <div className="h-4 w-8 bg-[#F2EDE6] rounded-md shrink-0" />
+                  <div className="w-9 h-9 rounded-full bg-[#F2EDE6] shrink-0" />
+                </div>
+              ))}
+              <div className="h-12 w-full border border-dashed border-[rgba(100,80,60,0.2)] rounded-xl bg-[#FAF8F5]/50" />
+            </div>
+
+            {/* Right Panel Skeleton */}
+            <div className="space-y-4">
+              {/* Quick Stats Skeleton */}
+              <div className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl p-4 space-y-3">
+                <div className="h-3.5 w-20 bg-[#F2EDE6] rounded-md mb-2" />
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex justify-between items-center">
+                    <div className="h-4 w-24 bg-[#F2EDE6] rounded-md" />
+                    <div className="h-4 w-8 bg-[#F2EDE6] rounded-md" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Upcoming Skeleton */}
+              <div className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl p-4 space-y-3">
+                <div className="h-3.5 w-20 bg-[#F2EDE6] rounded-md mb-2" />
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-[#F2EDE6] shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-28 bg-[#F2EDE6] rounded-md" />
+                    <div className="h-3 w-16 bg-[#F2EDE6] rounded-md" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </PageContent>
     )

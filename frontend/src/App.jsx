@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
 import ProtectedRoute from './components/layout/ProtectedRoute'
@@ -27,16 +27,28 @@ import { useHabitReminders } from './hooks/useHabitReminders'
 
 function AppLayout() {
   useHabitReminders()
+  const location = useLocation()
   return (
     <section className="flex min-h-dvh h-dvh max-h-dvh bg-[#FAF8F5] overflow-hidden">
       <Navbar />
       <section className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
         <AppHeader />
         <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-nav-safe md:pb-0 overscroll-y-contain">
-          <Outlet />
+          <div key={location.pathname} className="animate-fade-in h-full w-full">
+            <Outlet />
+          </div>
         </main>
       </section>
     </section>
+  )
+}
+
+function OuterLayout() {
+  const location = useLocation()
+  return (
+    <div key={location.pathname} className="animate-fade-in min-h-screen">
+      <Outlet />
+    </div>
   )
 }
 
@@ -52,14 +64,18 @@ export default function App() {
       >
         <ToastContainer />
         <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/invite/:code" element={<Invite />} />
+          {/* Standalone outer routes with fade transition */}
+          <Route element={<OuterLayout />}>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/invite/:code" element={<Invite />} />
+          </Route>
 
+          {/* Protected dashboard routes with inner content transitions */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />

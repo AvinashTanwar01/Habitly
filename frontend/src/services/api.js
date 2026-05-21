@@ -54,5 +54,86 @@ api.interceptors.response.use(
   }
 )
 
+const cache = new Map()
+
+const originalGet = api.get
+const originalPost = api.post
+const originalPut = api.put
+const originalDelete = api.delete
+
+function clearCache() {
+  cache.clear()
+}
+
+api.post = function (url, data, config) {
+  clearCache()
+  return originalPost.call(this, url, data, config)
+}
+
+api.put = function (url, data, config) {
+  clearCache()
+  return originalPut.call(this, url, data, config)
+}
+
+api.delete = function (url, config) {
+  clearCache()
+  return originalDelete.call(this, url, config)
+}
+
+api.get = function (url, config = {}) {
+  const cacheableUrls = ['/habits/today', '/stats/summary', '/stats/weekly']
+  const shouldCache = cacheableUrls.some(cu => url === cu || url.endsWith(cu))
+
+  if (!shouldCache || config.skipCache) {
+    return originalGet.call(this, url, config)
+  }
+
+  const cached = cache.get(url)
+  const now = Date.now()
+
+  if (cached && now < cached.expires) {
+    // Background revalidation
+    originalGet.call(this, url, { ...config, skipCache: true })
+      .then((res) => {
+        const isDifferent = JSON.stringify(res.data) !== JSON.stringify(cached.data)
+        cache.set(url, {
+          data: res.data,
+          expires: Date.now() + 30000,
+          response: {
+            status: res.status,
+            statusText: res.statusText,
+            headers: res.headers,
+            config: res.config
+          }
+        })
+        if (isDifferent) {
+          const event = new CustomEvent('api-cache-update', {
+            detail: { url, data: res.data }
+          })
+          window.dispatchEvent(event)
+        }
+      })
+      .catch((err) => {
+        console.warn(`[cache-revalidate] Background fetch failed for ${url}:`, err.message)
+      })
+
+    return Promise.resolve({ ...cached.response, data: cached.data })
+  }
+
+  return originalGet.call(this, url, config).then((res) => {
+    cache.set(url, {
+      data: res.data,
+      expires: Date.now() + 30000,
+      response: {
+        status: res.status,
+        statusText: res.statusText,
+        headers: res.headers,
+        config: res.config
+      }
+    })
+    return res
+  })
+}
+
 export { TOKEN_KEY }
 export default api

@@ -73,9 +73,6 @@ export default function Landing() {
           <section className="flex items-center gap-4 text-sm">
             {user ? (
               <>
-                <Link to="/dashboard" className="text-[#5a4a3a] hover:text-[#1C1917] hidden sm:inline">
-                  Dashboard
-                </Link>
                 <button
                   type="button"
                   className="text-[#8C6E52] hover:text-[#1C1917] hidden sm:inline"

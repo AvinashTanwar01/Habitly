@@ -22,6 +22,24 @@ try {
 
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.warn(`Habitly API running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`)
+
+  // Render free tier self-ping to prevent sleep (every 14 minutes)
+  if (process.env.RENDER_EXTERNAL_URL) {
+    const url = `${process.env.RENDER_EXTERNAL_URL}/health`
+    console.warn(`[ping] Registering self-ping to ${url} every 14 minutes`)
+    const https = require('https')
+    const http = require('http')
+    const client = url.startsWith('https') ? https : http
+
+    setInterval(() => {
+      console.log(`[ping] Sending self-ping to ${url}`)
+      client.get(url, (res) => {
+        console.log(`[ping] Self-ping status code: ${res.statusCode}`)
+      }).on('error', (err) => {
+        console.error('[ping] Self-ping failed:', err.message)
+      })
+    }, 14 * 60 * 1000)
+  }
 })
 
 process.on('unhandledRejection', (err) => {

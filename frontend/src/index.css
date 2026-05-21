@@ -75,3 +75,16 @@ body {
     transform: translateX(0);
   }
 }
+
+.animate-fade-in {
+  animation: pageFadeIn 200ms ease-out forwards;
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
