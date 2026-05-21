@@ -79,8 +79,43 @@ export default function HabitDetail() {
 
   if (!data) {
     return (
-      <PageContent>
-        <p className="text-[#9A8070]">Loading…</p>
+      <PageContent className="max-w-6xl mx-auto">
+        <div className="animate-pulse space-y-6">
+          <div className="h-4 w-32 bg-[#F2EDE6] rounded-md mb-5" />
+          <div className="h-3 w-40 bg-[#F2EDE6] rounded-md mb-1" />
+
+          {/* Consistency Sky Placeholder */}
+          <div className="h-48 bg-[#1C1917] rounded-2xl border border-[#2a2624]" />
+
+          {/* Progress ring card placeholder */}
+          <div className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-4 h-24">
+            <div className="w-11 h-11 rounded-full border-4 border-[#F2EDE6]" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-48 bg-[#F2EDE6] rounded-md" />
+              <div className="h-3.5 w-32 bg-[#F2EDE6] rounded-md" />
+            </div>
+            <div className="h-10 w-24 bg-[#F2EDE6] rounded-lg" />
+          </div>
+
+          {/* Streaks stats row */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl p-4 h-20 space-y-2">
+                <div className="h-3 w-16 bg-[#F2EDE6] rounded-md" />
+                <div className="h-5 w-20 bg-[#F2EDE6] rounded-md" />
+              </div>
+            ))}
+          </div>
+
+          {/* Two columns: Calendar + Details */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl p-5 h-64" />
+            <div className="space-y-4">
+              <div className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl p-5 h-48" />
+              <div className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl p-5 h-40" />
+            </div>
+          </div>
+        </div>
       </PageContent>
     )
   }

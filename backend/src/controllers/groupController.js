@@ -228,9 +228,9 @@ exports.inviteByEmail = async (req, res) => {
     const email = normalizeEmail(req.body.email)
     if (!email) return res.status(400).json({ message: 'Email is required' })
 
-    const alreadyInvited = (group.invitedEmails || []).some((i) => i.email === email)
-    if (alreadyInvited) {
-      return res.status(400).json({ message: 'Invite already sent to this email', alreadySent: true })
+    const inviteCount = (group.invitedEmails || []).filter((i) => i.email === email).length
+    if (inviteCount >= 5) {
+      return res.status(400).json({ message: 'Invite limit (5) reached for this email', alreadySent: true })
     }
 
     const existingUser = await User.findOne({ email: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') })

@@ -9,13 +9,41 @@ const DOTS = ['#C4A882', '#8C6E52', '#9A8070']
 export default function Groups() {
   const [groups, setGroups] = useState([])
   const [usage, setUsage] = useState({ used: 0, limit: 3 })
+  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
+    setLoading(true)
     Promise.all([groupService.getAll(), groupService.getUsage()])
-      .then(([g, u]) => { setGroups(g); setUsage(u) })
-      .catch(() => {})
+      .then(([g, u]) => { setGroups(g); setUsage(u); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
+
+  if (loading) {
+    return (
+      <PageContent>
+        <div className="animate-pulse space-y-6">
+          <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2">
+            <div className="h-7 w-36 bg-[#F2EDE6] rounded-lg" />
+            <div className="h-10 w-full sm:w-28 bg-[#F2EDE6] rounded-lg" />
+          </header>
+          <div className="h-4 w-64 bg-[#F2EDE6] rounded-md mb-6" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white border rounded-xl p-4 h-32 flex flex-col justify-between">
+                <div>
+                  <div className="w-2 h-2 rounded-full bg-[#F2EDE6] mb-2" />
+                  <div className="h-5 w-32 bg-[#F2EDE6] rounded-md" />
+                </div>
+                <div className="h-4 w-24 bg-[#F2EDE6] rounded-md" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </PageContent>
+    )
+  }
 
   return (
     <PageContent>

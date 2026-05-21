@@ -136,7 +136,39 @@ export default function Habits() {
   if (loading) {
     return (
       <PageContent>
-        <p className="text-[#9A8070]">Loading...</p>
+        <div className="animate-pulse space-y-6">
+          <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
+            <div className="h-4 w-24 bg-[#F2EDE6] rounded-md" />
+            <div className="h-10 w-full sm:w-28 bg-[#F2EDE6] rounded-lg" />
+          </header>
+
+          <nav className="flex gap-2 mb-6">
+            <div className="h-9 w-24 bg-[#F2EDE6] rounded-full" />
+            <div className="h-9 w-24 bg-[#F2EDE6] rounded-full" />
+          </nav>
+
+          {/* Stats grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-[#F2EDE6]/40 rounded-xl p-3 h-16 space-y-2">
+                <div className="h-3.5 w-12 bg-[#F2EDE6] rounded-md" />
+                <div className="h-5 w-8 bg-[#F2EDE6] rounded-md" />
+              </div>
+            ))}
+          </div>
+
+          <div className="h-9 w-64 bg-[#F2EDE6] rounded-full mb-6" />
+
+          {/* List items */}
+          <div className="space-y-4">
+            <div className="h-4 w-20 bg-[#F2EDE6] rounded-md" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-white border border-[rgba(100,80,60,0.12)] rounded-xl p-4 h-32" />
+              ))}
+            </div>
+          </div>
+        </div>
       </PageContent>
     )
   }

@@ -33,9 +33,11 @@ export default function GroupLeader() {
   const [msg, setMsg] = useState('')
   const { toast } = useToast()
 
-  const sentEmails = new Set((group?.invitedEmails || []).map((e) => String(e).toLowerCase()))
+  const allSentEmails = (group?.invitedEmails || []).map((e) => String(e).toLowerCase())
+  const sentEmails = new Set(allSentEmails)
   const emailNorm = email.trim().toLowerCase()
-  const emailAlreadySent = emailNorm && sentEmails.has(emailNorm)
+  const emailInviteCount = emailNorm ? allSentEmails.filter((e) => e === emailNorm).length : 0
+  const emailAlreadySent = emailInviteCount >= 5
 
   const load = () => {
     groupService
@@ -83,14 +85,14 @@ export default function GroupLeader() {
       return
     }
     if (emailAlreadySent) {
-      toast.info('Invite already sent to this email')
+      toast.info('Invite limit (5) reached for this email')
       return
     }
     setEmailSending(true)
     try {
       const r = await groupService.inviteByEmail(id, emailNorm)
       if (r.alreadySent) {
-        toast.info('Invite already sent to this email')
+        toast.info('Invite limit (5) reached for this email')
       } else {
         setMsg(r.inviteUrl ? `Invite link: ${r.inviteUrl}` : r.message)
         toast.success(r.message || 'Invite email sent')
@@ -98,7 +100,7 @@ export default function GroupLeader() {
       }
     } catch (err) {
       const data = err.response?.data
-      if (data?.alreadySent) toast.info('Invite already sent to this email')
+      if (data?.alreadySent) toast.info('Invite limit (5) reached for this email')
       else if (data?.alreadyMember) toast.info('This user is already in the group')
       else toast.error(data?.message || 'Failed to send invite')
     } finally {
@@ -160,7 +162,60 @@ export default function GroupLeader() {
   if (!group) {
     return (
       <PageContent>
-        <p className="text-[#9A8070]">Loading...</p>
+        <div className="animate-pulse space-y-6">
+          {/* Header Skeleton */}
+          <header className="flex flex-wrap justify-between items-start gap-4 mb-6">
+            <div className="space-y-2">
+              <div className="h-7 w-48 bg-[#F2EDE6] rounded-lg" />
+              <div className="h-4 w-56 bg-[#F2EDE6] rounded-md" />
+            </div>
+            <div className="h-10 w-full sm:w-32 bg-[#F2EDE6] rounded-lg" />
+          </header>
+
+          {/* Members Title */}
+          <div className="h-5 w-24 bg-[#F2EDE6] rounded-md mb-3" />
+          {/* Members Cards Skeletons */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white border rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-[#F2EDE6]" />
+                  <div className="h-4 w-24 bg-[#F2EDE6] rounded-md" />
+                </div>
+                <div className="h-4 w-16 bg-[#F2EDE6] rounded-md" />
+                <div className="h-1.5 w-full bg-[#F2EDE6] rounded-full" />
+              </div>
+            ))}
+          </div>
+
+          {/* Tasks Header Skeleton */}
+          <div className="flex justify-between items-center mb-3">
+            <div className="h-5 w-20 bg-[#F2EDE6] rounded-md animate-pulse" />
+            <div className="h-8 w-20 bg-[#F2EDE6] rounded-md animate-pulse" />
+          </div>
+          {/* Tasks List Skeletons */}
+          <div className="space-y-2 mb-8">
+            {[1, 2].map((i) => (
+              <div key={i} className="bg-white border rounded-xl p-4 flex justify-between items-center h-16">
+                <div className="space-y-2">
+                  <div className="h-4 w-36 bg-[#F2EDE6] rounded-md" />
+                  <div className="h-3.5 w-28 bg-[#F2EDE6] rounded-md" />
+                </div>
+                <div className="h-4 w-12 bg-[#F2EDE6] rounded-md" />
+              </div>
+            ))}
+          </div>
+
+          {/* Notes Title & Textarea Skeleton */}
+          <div className="h-5 w-16 bg-[#F2EDE6] rounded-md mb-3" />
+          <div className="bg-white border rounded-xl p-4 mb-4 space-y-3">
+            <div className="h-16 w-full bg-[#F2EDE6] rounded-lg" />
+            <div className="flex gap-2">
+              <div className="h-8 w-24 bg-[#F2EDE6] rounded-md" />
+              <div className="h-8 w-24 bg-[#F2EDE6] rounded-md" />
+            </div>
+          </div>
+        </div>
       </PageContent>
     )
   }

@@ -26,8 +26,44 @@ export default function GroupMember() {
 
   if (!group) {
     return (
-      <PageContent>
-        <p className="text-[#9A8070]">Loading...</p>
+      <PageContent className="max-w-3xl">
+        <div className="animate-pulse space-y-6">
+          {/* Header Skeleton */}
+          <header className="mb-6 space-y-2">
+            <div className="h-7 w-48 bg-[#F2EDE6] rounded-lg" />
+            <div className="h-4 w-64 bg-[#F2EDE6] rounded-md" />
+          </header>
+
+          {/* Tasks Title */}
+          <div className="h-5 w-24 bg-[#F2EDE6] rounded-md mb-3" />
+          {/* Tasks List */}
+          <div className="space-y-2 mb-8">
+            {[1, 2].map((i) => (
+              <div key={i} className="bg-white border rounded-xl p-4 flex gap-3 items-start h-20">
+                <div className="w-5 h-5 rounded bg-[#F2EDE6] shrink-0 mt-0.5" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-32 bg-[#F2EDE6] rounded-md" />
+                  <div className="h-3.5 w-48 bg-[#F2EDE6] rounded-md" />
+                  <div className="h-3 w-16 bg-[#F2EDE6] rounded-md" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Notes Title */}
+          <div className="h-5 w-28 bg-[#F2EDE6] rounded-md mb-3" />
+          <div className="space-y-2 mb-8">
+            <div className="bg-[#F2EDE6]/40 rounded-xl p-3 h-16" />
+          </div>
+
+          {/* Members Title */}
+          <div className="h-5 w-20 bg-[#F2EDE6] rounded-md mb-3" />
+          <div className="flex flex-wrap gap-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-9 w-28 bg-[#F2EDE6] rounded-full" />
+            ))}
+          </div>
+        </div>
       </PageContent>
     )
   }
