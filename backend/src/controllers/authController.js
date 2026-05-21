@@ -10,7 +10,7 @@ const TaskCompletion = require('../models/taskCompletionModel')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
-const nodemailer = require('nodemailer')
+const { sendEmail } = require('../utils/emailUtils')
 const { verifyGoogleIdToken } = require('../utils/googleAuthUtils')
 
 const signToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN })
@@ -233,16 +233,9 @@ exports.forgotPassword = async (req, res) => {
     user.resetPasswordExpires = Date.now() + 3600000
     await user.save()
 
-    if (process.env.SMTP_HOST) {
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT) || 587,
-        secure: false,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-      })
-      const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/reset-password/${resetToken}`
-      await transporter.sendMail({
-        from: `"Habitly" <${process.env.SMTP_USER}>`,
+    const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/reset-password/${resetToken}`
+    try {
+      await sendEmail({
         to: email,
         subject: 'Reset your Habitly password',
         html: `
@@ -254,6 +247,8 @@ exports.forgotPassword = async (req, res) => {
           </div>
         `,
       })
+    } catch (mailErr) {
+      console.warn('Password reset email failed to send:', mailErr.message)
     }
     res.json({ message: 'If that email exists, a reset link has been sent.' })
   } catch (err) {

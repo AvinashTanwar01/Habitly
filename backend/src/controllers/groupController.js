@@ -5,6 +5,7 @@ const GroupNote = require('../models/groupNoteModel')
 const TaskCompletion = require('../models/taskCompletionModel')
 const User = require('../models/userModel')
 const { notifyUser } = require('../utils/notifyUser')
+const { sendEmail } = require('../utils/emailUtils')
 const crypto = require('crypto')
 
 const MAX_MEMBERS = 15
@@ -216,7 +217,6 @@ exports.inviteByUsername = async (req, res) => {
 
 exports.inviteByEmail = async (req, res) => {
   try {
-    const nodemailer = require('nodemailer')
     const group = await Group.findById(req.params.id)
     if (!group) return res.status(404).json({ message: 'Group not found' })
     const userId = req.user.id || req.user._id
@@ -246,19 +246,8 @@ exports.inviteByEmail = async (req, res) => {
     let emailSent = false
     let emailError = null
 
-    if (process.env.SMTP_HOST) {
-      try {
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: Number(process.env.SMTP_PORT) || 587,
-          secure: false,
-          auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-          connectionTimeout: 10000,
-          greetingTimeout: 10000,
-          socketTimeout: 15000,
-        })
-
-        const emailHtml = `
+    try {
+      const emailHtml = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -299,19 +288,17 @@ exports.inviteByEmail = async (req, res) => {
   </table>
 </body>
 </html>
-        `
+      `
 
-        await transporter.sendMail({
-          from: `"Habitly" <${process.env.SMTP_USER}>`,
-          to: email,
-          subject: `${leader.displayName || 'A friend'} invited you to join ${group.name} on Habitly`,
-          html: emailHtml,
-        })
-        emailSent = true
-      } catch (mailErr) {
-        console.warn('SMTP delivery failed, falling back to manual share link:', mailErr.message)
-        emailError = mailErr.message
-      }
+      await sendEmail({
+        to: email,
+        subject: `${leader.displayName || 'A friend'} invited you to join ${group.name} on Habitly`,
+        html: emailHtml,
+      })
+      emailSent = true
+    } catch (mailErr) {
+      console.warn('Email delivery failed, falling back to manual share link:', mailErr.message)
+      emailError = mailErr.message
     }
 
     // Always save the invitation to the DB so the group tracks that it was generated/attempted

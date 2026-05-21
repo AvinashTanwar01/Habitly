@@ -1,58 +1,80 @@
+const { Resend } = require('resend')
 const nodemailer = require('nodemailer')
 
-function isEmailConfigured() {
-  return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
+/**
+ * Centralized email sending function.
+ * Attempts delivery via Resend API if RESEND_API_KEY is configured.
+ * Otherwise, falls back to traditional Nodemailer SMTP if configured.
+ * 
+ * @param {Object} options
+ * @param {string} options.to - Recipient email address
+ * @param {string} options.subject - Email subject line
+ * @param {string} options.html - HTML content of the email
+ * @returns {Promise<{success: boolean, provider: string, id?: string}>}
+ */
+async function sendEmail({ to, subject, html }) {
+  // 1. Try Resend if configured
+  if (process.env.RESEND_API_KEY) {
+    try {
+      console.log('[email] Attempting delivery via Resend API...')
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      
+      // Resend free tier sends from onboarding@resend.dev. 
+      // If a custom domain is verified, specify RESEND_FROM_EMAIL (e.g. hello@habitly.app)
+      const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+      
+      const response = await resend.emails.send({
+        from: `Habitly <${fromEmail}>`,
+        to: to,
+        subject: subject,
+        html: html,
+      })
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Resend API returned an error')
+      }
+
+      console.log('[email] Sent successfully via Resend API. ID:', response.data?.id)
+      return { success: true, provider: 'resend', id: response.data?.id }
+    } catch (err) {
+      console.error('[email] Resend delivery failed:', err.message)
+      throw err
+    }
+  }
+
+  // 2. Fall back to Nodemailer SMTP if SMTP details exist
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    try {
+      console.log('[email] Attempting delivery via Nodemailer SMTP...')
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT) || 587,
+        secure: false,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
+      })
+
+      const info = await transporter.sendMail({
+        from: `"Habitly" <${process.env.SMTP_USER}>`,
+        to: to,
+        subject: subject,
+        html: html,
+      })
+
+      console.log('[email] Sent successfully via Nodemailer SMTP. MessageId:', info.messageId)
+      return { success: true, provider: 'smtp', messageId: info.messageId }
+    } catch (err) {
+      console.error('[email] Nodemailer SMTP delivery failed:', err.message)
+      throw err
+    }
+  }
+
+  throw new Error('No email providers (Resend or SMTP) are configured in the environment')
 }
 
-function getTransporter() {
-  if (!isEmailConfigured()) return null
-  try {
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    })
-  } catch (e) {
-    console.warn('[email] transporter error:', e.message)
-    return null
-  }
-}
-
-async function sendInviteEmail({ to, groupName, leaderName, inviteUrl }) {
-  const transporter = getTransporter()
-  if (!transporter) {
-    console.warn('[email] SMTP not configured — invite link not emailed:', inviteUrl)
-    return { skipped: true, inviteUrl }
-  }
-  const subject = `You've been invited to join ${groupName} on Habitly`
-  const html = `
-<!DOCTYPE html>
-<html><body style="font-family: system-ui,sans-serif;color:#1C1917;line-height:1.6;">
-<p style="font-size:18px;font-weight:600;color:#8C6E52;">Habitly</p>
-<p>Hi there! <strong>${leaderName}</strong> has invited you to join the group <strong>${groupName}</strong>.</p>
-<p style="margin:24px 0;">
-<a href="${inviteUrl}" style="display:inline-block;background:#1C1917;color:#FAF8F5;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600;">Accept Invite</a>
-</p>
-<p style="font-size:13px;color:#9A8070;">Or copy: ${inviteUrl}</p>
-<p style="font-size:12px;color:#9A8070;margin-top:32px;">If you didn't expect this email, you can ignore it.</p>
-</body></html>`
-
-  try {
-    await transporter.sendMail({
-      from: process.env.SMTP_USER,
-      to,
-      subject,
-      html,
-    })
-    return { sent: true }
-  } catch (e) {
-    console.error('[email] send failed:', e.message)
-    throw e
-  }
-}
-
-module.exports = { sendInviteEmail, isEmailConfigured }
+module.exports = { sendEmail }
