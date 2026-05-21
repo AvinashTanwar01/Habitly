@@ -130,12 +130,12 @@ export function drawAnimatedLines(ctx, lines, time = Date.now()) {
 /** Lines between data star objects (updates positions each frame) */
 export function drawAnimatedLinesFromStars(ctx, linePairs, time = Date.now()) {
   linePairs.forEach((pair, i) => {
-    const alpha = 0.08 + 0.12 * Math.sin(time / 2200 + i * 0.8)
+    const alpha = 0.04 + 0.06 * Math.sin(time / 2200 + i * 0.8)
     ctx.beginPath()
     ctx.moveTo(pair[0].x, pair[0].y)
     ctx.lineTo(pair[1].x, pair[1].y)
     ctx.strokeStyle = `rgba(196,168,130,${alpha})`
-    ctx.lineWidth = 0.6
+    ctx.lineWidth = 0.5
     ctx.stroke()
   })
 }
@@ -155,7 +155,7 @@ export function drawDataStar(ctx, s, hovered = false) {
   ctx.restore()
 
   if (s.label) {
-    ctx.fillStyle = `rgba(255,240,200,${alpha * 0.75})`
+    ctx.fillStyle = `rgba(255,240,200,${Math.max(0.65, alpha * 0.85)})`
     ctx.font = s.labelFont || '10px "DM Sans", Inter, system-ui, sans-serif'
     ctx.textAlign = 'center'
     ctx.fillText(s.label, s.x, s.y + r + 10)

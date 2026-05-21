@@ -9,11 +9,8 @@ import {
   drawTooltip,
   findClosestStar,
   scaleStars,
-  wrapStar,
   tickTwinkle,
   constellationFromCategory,
-  CONSTELLATION_ZONES,
-  streakRadius,
 } from '../../utils/constellationCanvas'
 
 function makeRng(seed) {
@@ -30,95 +27,97 @@ function makeRng(seed) {
   }
 }
 
-function buildLeaderboardStars(users, W, H, allLowStreak) {
-  if (!users.length) return { stars: [], lines: [], groupLabels: [] }
+function buildLeaderboardStars(users, W, H) {
+  if (!users.length) return { stars: [], lines: [] }
 
-  if (users.length <= 2) {
-    const stars = users.map((u, i) => {
-      const { r, glow } = streakRadius(u.streak || 0)
-      const x = W * (0.42 + i * 0.12)
-      const y = H * 0.5
-      return makeStar(u, x, y, r, glow, 0.9)
-    })
-    return { stars, lines: [], groupLabels: [] }
-  }
+  // Sort by streak descending so rank 0 = highest
+  const sorted = [...users].sort((a, b) => (b.streak || 0) - (a.streak || 0))
+  const maxStreak = sorted[0]?.streak || 1
 
-  const groups = {}
-  users.forEach((u) => {
-    const name = allLowStreak ? 'Rising Stars' : constellationFromCategory(u.habitCategory)
-    if (!groups[name]) groups[name] = []
-    groups[name].push(u)
-  })
+  const stars = sorted.map((u, i) => {
+    const streak = u.streak || 0
+    const rnd = makeRng(`${u.userId || u.id || i}-${streak}`)
 
-  const stars = []
-  const lines = []
-  const groupLabels = []
+    // Vertical: top 20% for highest, bottom 40% for zero streak
+    const ratio = maxStreak > 0 ? streak / maxStreak : 0
+    const yMin = H * 0.05
+    const yMax = H * 0.88
+    // High streak → small y (top), low streak → large y (bottom)
+    const yCenter = yMax - ratio * (yMax - yMin * 2.5)
+    // Add some random scatter around the y band
+    const yScatter = H * 0.08
+    const y = Math.max(yMin, Math.min(yMax, yCenter + (rnd() - 0.5) * yScatter))
 
-  Object.entries(groups).forEach(([groupName, members]) => {
-    const zone = CONSTELLATION_ZONES[groupName] || CONSTELLATION_ZONES['The Wanderers']
-    const rnd = makeRng(`${groupName}-${members.length}`)
-    const gx0 = zone.x0 * W
-    const gx1 = zone.x1 * W
-    const gy0 = zone.y0 * H
-    const gy1 = zone.y1 * H
-    const clusterStars = []
+    // Spread x across full width
+    const x = W * (0.06 + rnd() * 0.88)
 
-    members.forEach((u, i) => {
-      const { r, glow } = streakRadius(u.streak || 0)
-      const x = gx0 + rnd() * (gx1 - gx0)
-      const y = gy0 + rnd() * (gy1 - gy0)
-      const star = makeStar(u, x, y, r, glow, u.streak >= 14 ? 0.88 : 0.55)
-      clusterStars.push(star)
-      stars.push(star)
-    })
-
-    const maxDist = W * 0.18
-    for (let i = 0; i < clusterStars.length; i++) {
-      for (let j = i + 1; j < clusterStars.length; j++) {
-        const a = clusterStars[i]
-        const b = clusterStars[j]
-        if (Math.hypot(a.x - b.x, a.y - b.y) < maxDist) {
-          lines.push([a, b])
-        }
-      }
+    // Size & glow based on streak
+    let r, glow, alpha, colorBase
+    if (streak >= 60) {
+      r = 6.5; glow = 22; alpha = 0.95; colorBase = '255,250,220'
+    } else if (streak >= 30) {
+      r = 5; glow = 18; alpha = 0.88; colorBase = '255,235,160'
+    } else if (streak >= 14) {
+      r = 3.8; glow = 14; alpha = 0.78; colorBase = '255,215,120'
+    } else if (streak >= 7) {
+      r = 2.8; glow = 10; alpha = 0.65; colorBase = '220,185,110'
+    } else if (streak >= 1) {
+      r = 1.8; glow = 6;  alpha = 0.45; colorBase = '180,155,100'
+    } else {
+      r = 1.2; glow = 3;  alpha = 0.25; colorBase = '140,120,90'
     }
 
-    groupLabels.push({
-      text: groupName.toUpperCase(),
-      x: (gx0 + gx1) / 2,
-      y: gy0 + 14,
-    })
+    // Movement: faster for higher streaks
+    const speed = 0.015 + (ratio * 0.06)
+    const angle = rnd() * Math.PI * 2
+
+    return {
+      userId: String(u.userId || u.id || ''),
+      displayName: u.displayName || 'User',
+      streak,
+      habitCategory: u.habitCategory,
+      constellation: constellationFromCategory(u.habitCategory),
+      x, y, r, glow, alpha,
+      colorBase,
+      fill: `rgba(${colorBase},${alpha})`,
+      glowColor: `rgba(${colorBase},0.6)`,
+      minAlpha: Math.max(0.15, alpha - 0.2),
+      maxAlpha: Math.min(1, alpha + 0.08),
+      dx: Math.cos(angle) * speed,
+      dy: Math.sin(angle) * speed * 0.3, // less vertical movement to preserve rank
+      twinkleSpeed: 0.006 + rnd() * 0.012,
+      twinkleDir: rnd() > 0.5 ? 1 : -1,
+      label: (u.displayName || '').slice(0, 12),
+      tooltipLines: [
+        u.displayName || 'User',
+        `${streak} day streak`,
+        constellationFromCategory(u.habitCategory),
+      ],
+      // Store y bounds for bouncing
+      yMin: Math.max(H * 0.03, y - yScatter),
+      yMax: Math.min(H * 0.95, y + yScatter),
+    }
   })
 
-  return { stars, lines, groupLabels }
-}
+  // Connect nearby stars (max 2 neighbors per star)
+  const lines = []
+  const maxDist = W * 0.15
+  const neighborCount = new Map(stars.map(s => [s.userId, 0]))
 
-function makeStar(u, x, y, r, glow, alphaBase) {
-  const id = String(u.userId || u.id || '')
-  return {
-    userId: id,
-    displayName: u.displayName || 'User',
-    streak: u.streak || 0,
-    habitCategory: u.habitCategory,
-    constellation: constellationFromCategory(u.habitCategory),
-    x,
-    y,
-    r,
-    glow,
-    alpha: alphaBase,
-    minAlpha: 0.65,
-    maxAlpha: 0.95,
-    dx: (Math.random() - 0.5) * 0.05,
-    dy: (Math.random() - 0.5) * 0.05,
-    twinkleSpeed: Math.random() * 0.01 + 0.008,
-    twinkleDir: Math.random() > 0.5 ? 1 : -1,
-    label: (u.displayName || '').slice(0, 10),
-    tooltipLines: [
-      u.displayName || 'User',
-      `${u.streak || 0} day streak`,
-      constellationFromCategory(u.habitCategory),
-    ],
+  for (let i = 0; i < stars.length; i++) {
+    for (let j = i + 1; j < stars.length; j++) {
+      if ((neighborCount.get(stars[i].userId) || 0) >= 2) break
+      if ((neighborCount.get(stars[j].userId) || 0) >= 2) continue
+      const dist = Math.hypot(stars[i].x - stars[j].x, stars[i].y - stars[j].y)
+      if (dist < maxDist) {
+        lines.push([stars[i], stars[j]])
+        neighborCount.set(stars[i].userId, (neighborCount.get(stars[i].userId) || 0) + 1)
+        neighborCount.set(stars[j].userId, (neighborCount.get(stars[j].userId) || 0) + 1)
+      }
+    }
   }
+
+  return { stars, lines }
 }
 
 const LeaderboardConstellation = forwardRef(function LeaderboardConstellation(
@@ -129,7 +128,6 @@ const LeaderboardConstellation = forwardRef(function LeaderboardConstellation(
   const bgRef = useRef([])
   const dataRef = useRef([])
   const linesRef = useRef([])
-  const labelsRef = useRef([])
   const hoveredRef = useRef(null)
   const highlightRef = useRef(null)
   const highlightUntilRef = useRef(0)
@@ -163,21 +161,12 @@ const LeaderboardConstellation = forwardRef(function LeaderboardConstellation(
       canvas.height = h
       bgRef.current = initBgStars(w, h)
 
-      const allLow = users.length > 0 && users.every((u) => (u.streak || 0) < 14)
       if (oldW && oldH && dataRef.current.length) {
         scaleStars(dataRef.current, oldW, oldH, w, h)
-        labelsRef.current.forEach((lb) => {
-          lb.x *= w / oldW
-          lb.y *= h / oldH
-        })
       } else {
-        const built = buildLeaderboardStars(users, w, h, allLow)
+        const built = buildLeaderboardStars(users, w, h)
         dataRef.current = built.stars
         linesRef.current = built.lines
-        labelsRef.current = built.groupLabels
-        if (allLow && users.length > 2) {
-          labelsRef.current = [{ text: 'RISING STARS', x: w * 0.5, y: h * 0.12 }]
-        }
       }
       sizeRef.current = { w, h }
     }
@@ -188,9 +177,7 @@ const LeaderboardConstellation = forwardRef(function LeaderboardConstellation(
       const my = ((e.clientY - rect.top) / rect.height) * canvas.height
       hoveredRef.current = findClosestStar(dataRef.current, mx, my, 30)
     }
-    const handleMouseLeave = () => {
-      hoveredRef.current = null
-    }
+    const handleMouseLeave = () => { hoveredRef.current = null }
 
     const draw = () => {
       const W = canvas.width
@@ -220,13 +207,25 @@ const LeaderboardConstellation = forwardRef(function LeaderboardConstellation(
         highlightRef.current && now < highlightUntilRef.current ? highlightRef.current : null
 
       dataRef.current.forEach((s) => {
+        // Move horizontally, wrap around edges
         s.x += s.dx
+        if (s.x < 0) s.x = W
+        if (s.x > W) s.x = 0
+
+        // Bounce vertically within streak band
         s.y += s.dy
-        wrapStar(s, W, H)
+        if (s.y < s.yMin) { s.y = s.yMin; s.dy = Math.abs(s.dy) }
+        if (s.y > s.yMax) { s.y = s.yMax; s.dy = -Math.abs(s.dy) }
+
         tickTwinkle(s)
+
+        // Update fill with current alpha
+        s.fill = `rgba(${s.colorBase},${s.alpha})`
+
         const isHov = hovered === s
         const isRow = rowHighlight && s.userId === rowHighlight
         drawDataStar(ctx, s, isHov || isRow)
+
         if (isRow && !isHov) {
           ctx.save()
           ctx.shadowBlur = (s.glow || 12) + 10
@@ -237,13 +236,6 @@ const LeaderboardConstellation = forwardRef(function LeaderboardConstellation(
           ctx.fill()
           ctx.restore()
         }
-      })
-
-      labelsRef.current.forEach((lb) => {
-        ctx.fillStyle = 'rgba(196,168,130,0.45)'
-        ctx.font = '11px "DM Sans", Inter, system-ui, sans-serif'
-        ctx.textAlign = 'center'
-        ctx.fillText(lb.text, lb.x, lb.y)
       })
 
       ctx.fillStyle = 'rgba(154,128,112,0.55)'
