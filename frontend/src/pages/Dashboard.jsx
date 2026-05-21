@@ -72,25 +72,34 @@ export default function Dashboard() {
   const [leaderboard, setLeaderboard] = useState([])
   const [allHabits, setAllHabits]     = useState([])
   const [loading, setLoading]         = useState(true)
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true)
   const [error, setError]             = useState('')
   const [amounts, setAmounts]         = useState({})
 
   const load = async () => {
     try {
-      const [h, s, w, lb, all] = await Promise.all([
+      const [h, s, w, all] = await Promise.all([
         habitService.getToday(),
         statsService.getSummary(),
         statsService.getWeekly(),
-        statsService.getLeaderboard(),
         habitService.getAll(),
       ])
       setHabits(Array.isArray(h) ? h : [])
       setSummary(s || null)
       setWeekly(w || {})
-      setLeaderboard(Array.isArray(lb) ? lb : [])
       setAllHabits(Array.isArray(all) ? all : [])
     } catch {
       toast?.error?.('Failed to refresh')
+    }
+
+    try {
+      setLeaderboardLoading(true)
+      const lb = await statsService.getLeaderboard()
+      setLeaderboard(Array.isArray(lb) ? lb : [])
+    } catch (err) {
+      console.warn('Failed to background refresh leaderboard spotlight:', err)
+    } finally {
+      setLeaderboardLoading(false)
     }
   }
 
@@ -99,26 +108,40 @@ export default function Dashboard() {
     ;(async () => {
       setLoading(true)
       setError('')
+      setLeaderboardLoading(true)
       try {
-        const [h, s, w, lb, all] = await Promise.all([
+        const [h, s, w, all] = await Promise.all([
           habitService.getToday(),
           statsService.getSummary(),
           statsService.getWeekly(),
-          statsService.getLeaderboard(),
           habitService.getAll(),
         ])
         if (!cancelled) {
           setHabits(Array.isArray(h) ? h : [])
           setSummary(s || null)
           setWeekly(w || {})
-          setLeaderboard(Array.isArray(lb) ? lb : [])
           setAllHabits(Array.isArray(all) ? all : [])
+          setLoading(false)
         }
       } catch (err) {
-        if (!cancelled)
+        if (!cancelled) {
           setError(err.response?.data?.message || 'Failed to load dashboard')
-      } finally {
-        if (!cancelled) setLoading(false)
+          setLoading(false)
+          return
+        }
+      }
+
+      try {
+        const lb = await statsService.getLeaderboard()
+        if (!cancelled) {
+          setLeaderboard(Array.isArray(lb) ? lb : [])
+          setLeaderboardLoading(false)
+        }
+      } catch (err) {
+        console.warn('Failed to background load leaderboard spotlight:', err)
+        if (!cancelled) {
+          setLeaderboardLoading(false)
+        }
       }
     })()
     return () => { cancelled = true }
@@ -516,7 +539,18 @@ export default function Dashboard() {
             <h3 className="text-[10px] uppercase tracking-wider text-[#9A8070] font-semibold mb-3">
               Leaderboard spotlight
             </h3>
-            {lbTeaser.length === 0 ? (
+            {leaderboardLoading ? (
+              <div className="space-y-3 animate-pulse">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="bg-[#FAF8F5] border border-[rgba(100,80,60,0.06)] rounded w-5 h-4 shrink-0" />
+                    <div className="w-7 h-7 rounded-full bg-[#FAF8F5] border border-[rgba(100,80,60,0.06)] shrink-0" />
+                    <div className="flex-1 h-4 bg-[#FAF8F5] border border-[rgba(100,80,60,0.06)] rounded" />
+                    <div className="w-8 h-4 bg-[#FAF8F5] border border-[rgba(100,80,60,0.06)] rounded shrink-0" />
+                  </div>
+                ))}
+              </div>
+            ) : lbTeaser.length === 0 ? (
               <p className="text-xs text-[#9A8070]">No public streaks yet.</p>
             ) : (
               <div className="space-y-2.5">

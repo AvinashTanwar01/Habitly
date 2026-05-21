@@ -20,6 +20,7 @@ export default function Habits() {
   const [weekly, setWeekly] = useState({})
   const [filter, setFilter] = useState('all')
   const [loading, setLoading] = useState(true)
+  const [weeklyLoading, setWeeklyLoading] = useState(true)
   const [error, setError] = useState('')
   const [modal, setModal] = useState({ open: false, habit: null })
 
@@ -29,32 +30,45 @@ export default function Habits() {
     const fetchData = async () => {
       setLoading(true)
       setError('')
+      setWeeklyLoading(true)
       timer = window.setTimeout(() => {
         if (cancelled) return
         setLoading(false)
         setError('Loading timed out. Please refresh and try again.')
       }, 10000)
       try {
-        const [h, a, w] = await Promise.all([
+        const [h, a] = await Promise.all([
           habitService.getAll(),
           habitService.getArchived().catch(() => []),
-          statsService.getWeekly(),
         ])
         if (!cancelled) {
           setHabits(Array.isArray(h) ? h : [])
           setArchived(Array.isArray(a) ? a : [])
-          setWeekly(w || {})
+          setLoading(false)
+          window.clearTimeout(timer)
         }
       } catch (err) {
-        console.error('Failed to fetch habits:', err)
+        console.error('Failed to fetch habits list:', err)
         if (!cancelled) {
           setHabits([])
-          setWeekly({})
           setError(err.response?.data?.message || 'Failed to load habits')
+          setLoading(false)
+          window.clearTimeout(timer)
+          return
         }
-      } finally {
-        window.clearTimeout(timer)
-        if (!cancelled) setLoading(false)
+      }
+
+      try {
+        const w = await statsService.getWeekly()
+        if (!cancelled) {
+          setWeekly(w || {})
+          setWeeklyLoading(false)
+        }
+      } catch (err) {
+        console.warn('Failed to background load weekly stats:', err)
+        if (!cancelled) {
+          setWeeklyLoading(false)
+        }
       }
     }
     fetchData()
@@ -65,24 +79,26 @@ export default function Habits() {
   }, [])
 
   const load = async () => {
-    setLoading(true)
-    setError('')
     try {
-      const [h, a, w] = await Promise.all([
+      const [h, a] = await Promise.all([
         habitService.getAll(),
         habitService.getArchived().catch(() => []),
-        statsService.getWeekly(),
       ])
       setHabits(Array.isArray(h) ? h : [])
       setArchived(Array.isArray(a) ? a : [])
-      setWeekly(w || {})
     } catch (err) {
       console.error('Failed to fetch habits:', err)
-      setHabits([])
-      setWeekly({})
-      setError(err.response?.data?.message || 'Failed to load habits')
+      toast.error('Failed to refresh habits list')
+    }
+
+    try {
+      setWeeklyLoading(true)
+      const w = await statsService.getWeekly()
+      setWeekly(w || {})
+    } catch (err) {
+      console.warn('Failed to background load weekly stats:', err)
     } finally {
-      setLoading(false)
+      setWeeklyLoading(false)
     }
   }
 
@@ -225,7 +241,14 @@ export default function Habits() {
         <article className="bg-[#F2EDE6] rounded-xl p-3"><p className="text-xs text-[#9A8070]">Active</p><p className="font-mono text-xl">{habits.length}</p></article>
         <article className="bg-[#F2EDE6] rounded-xl p-3"><p className="text-xs text-[#9A8070]">Done today</p><p className="font-mono text-xl">{todayHabits.length}/{habits.length}</p></article>
         <article className="bg-[#F2EDE6] rounded-xl p-3"><p className="text-xs text-[#9A8070]">Best streak</p><p className="font-mono text-xl">🔥 {bestStreak}</p></article>
-        <article className="bg-[#F2EDE6] rounded-xl p-3"><p className="text-xs text-[#9A8070]">This week</p><p className="font-mono text-xl">{weekPct}%</p></article>
+        <article className="bg-[#F2EDE6] rounded-xl p-3">
+          <p className="text-xs text-[#9A8070]">This week</p>
+          {weeklyLoading ? (
+            <p className="font-mono text-xl animate-pulse text-[#C4A882]">...</p>
+          ) : (
+            <p className="font-mono text-xl">{weekPct}%</p>
+          )}
+        </article>
       </section>
 
       <nav className="flex gap-2 mb-6 flex-wrap">

@@ -224,7 +224,7 @@ exports.inviteByEmail = async (req, res) => {
       return res.status(403).json({ message: 'Leader only' })
     }
 
-    const leader = await User.findById(userId)
+    const leader = req.user
     const email = normalizeEmail(req.body.email)
     if (!email) return res.status(400).json({ message: 'Email is required' })
 
@@ -243,152 +243,99 @@ exports.inviteByEmail = async (req, res) => {
 
     const inviteUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/invite/${group.inviteCode}`
 
-    if (!process.env.SMTP_HOST) {
-      group.invitedEmails = group.invitedEmails || []
-      group.invitedEmails.push({ email, sentAt: new Date() })
-      await group.save()
+    let emailSent = false
+    let emailError = null
+
+    if (process.env.SMTP_HOST) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: Number(process.env.SMTP_PORT) || 587,
+          secure: false,
+          auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
+        })
+
+        const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>You're invited to Habitly</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #FAF8F5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #FAF8F5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 500px; background-color: #ffffff; border: 1px solid rgba(100, 80, 60, 0.12); border-radius: 16px; overflow: hidden; padding: 32px;">
+          <tr>
+            <td style="color: #1C1917; font-size: 22px; font-weight: 700; text-align: center; padding-bottom: 24px;">
+              Habitly Invitation
+            </td>
+          </tr>
+          <tr>
+            <td style="color: #5A4A3A; font-size: 15px; line-height: 1.6; text-align: center; padding-bottom: 24px;">
+              <strong>${leader.displayName || 'A friend'}</strong> has invited you to join their group <strong>${group.name}</strong> on Habitly, the mindful habit tracking application.
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding-bottom: 24px;">
+              <a href="${inviteUrl}" style="display: inline-block; background-color: #1C1917; color: #FAF8F5; font-size: 15px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 12px; box-shadow: 0 4px 12px rgba(28, 25, 23, 0.15);">
+                Accept Invitation
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style="color: #9A8070; font-size: 12px; text-align: center; line-height: 1.5;">
+              Button not working? Copy and paste this URL into your browser:<br>
+              <a href="${inviteUrl}" style="color: #8C6E52; text-decoration: underline; word-break: break-all;">${inviteUrl}</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `
+
+        await transporter.sendMail({
+          from: `"Habitly" <${process.env.SMTP_USER}>`,
+          to: email,
+          subject: `${leader.displayName || 'A friend'} invited you to join ${group.name} on Habitly`,
+          html: emailHtml,
+        })
+        emailSent = true
+      } catch (mailErr) {
+        console.warn('SMTP delivery failed, falling back to manual share link:', mailErr.message)
+        emailError = mailErr.message
+      }
+    }
+
+    // Always save the invitation to the DB so the group tracks that it was generated/attempted
+    group.invitedEmails = group.invitedEmails || []
+    group.invitedEmails.push({ email, sentAt: new Date() })
+    await group.save()
+
+    if (emailSent) {
+      return res.json({ message: `Invite sent to ${email}`, alreadySent: false })
+    }
+
+    if (emailError) {
       return res.json({
-        message: `Invite link generated. Email service not configured — share manually: ${inviteUrl}`,
+        message: `Invite generated! Email delivery failed (${emailError}) — please share this link manually: ${inviteUrl}`,
         inviteUrl,
         alreadySent: false,
       })
     }
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: false,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    return res.json({
+      message: `Invite link generated. Email service not configured — share manually: ${inviteUrl}`,
+      inviteUrl,
+      alreadySent: false,
     })
-
-    await transporter.sendMail({
-      from: `"Habitly" <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: `${leader.displayName} invited you to join ${group.name} on Habitly`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>You're invited to Habitly</title>
-        </head>
-        <body style="margin: 0; padding: 0; background-color: #FAF8F5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
-          <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #FAF8F5; padding: 40px 20px;">
-            <tr>
-              <td align="center">
-                <!-- Card Container -->
-                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 500px; background-color: #ffffff; border: 1px solid rgba(100, 80, 60, 0.12); border-radius: 16px; box-shadow: 0 4px 20px rgba(28, 25, 23, 0.03); overflow: hidden;">
-                  
-                  <!-- Header Banner -->
-                  <tr>
-                    <td align="center" style="background-color: #1C1917; padding: 32px 24px; text-align: center;">
-                      <!-- Logo Container -->
-                      <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
-                        <tr>
-                          <td style="background-color: #FAF8F5; border-radius: 10px; padding: 6px 10px; font-size: 20px; line-height: 1;">🌱</td>
-                          <td style="color: #FAF8F5; font-size: 22px; font-weight: 700; padding-left: 10px; letter-spacing: -0.5px;">Habitly</td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-
-                  <!-- Content Body -->
-                  <tr>
-                    <td style="padding: 40px 32px;">
-                      <h2 style="color: #1C1917; font-size: 20px; font-weight: 700; margin: 0 0 16px 0; text-align: center; letter-spacing: -0.3px;">
-                        You're invited!
-                      </h2>
-                      
-                      <p style="color: #5A4A3A; font-size: 15px; line-height: 1.6; margin: 0 0 24px 0; text-align: center;">
-                        <strong>${leader.displayName}</strong> has invited you to join their group <strong style="color: #1C1917; border-bottom: 2px solid #C4A882; padding-bottom: 1px;">${group.name}</strong> on Habitly.
-                      </p>
-
-                      <!-- Feature Box -->
-                      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #FAF8F5; border-radius: 12px; border: 1px solid rgba(100, 80, 60, 0.06); margin-bottom: 28px;">
-                        <tr>
-                          <td style="padding: 20px;">
-                            <p style="color: #9A8070; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 12px 0;">
-                              Why join Habitly?
-                            </p>
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                              <tr>
-                                <td width="24" valign="top" style="font-size: 14px; padding-bottom: 8px;">✨</td>
-                                <td style="color: #5A4A3A; font-size: 13px; line-height: 1.4; padding-left: 8px; padding-bottom: 8px;">
-                                  <strong>Shared Constellations</strong> — Watch your team's daily habits light up the sky.
-                                </td>
-                              </tr>
-                              <tr>
-                                <td width="24" valign="top" style="font-size: 14px; padding-bottom: 8px;">🔥</td>
-                                <td style="color: #5A4A3A; font-size: 13px; line-height: 1.4; padding-left: 8px; padding-bottom: 8px;">
-                                  <strong>Streaks & Accountability</strong> — Keep your flames burning and build long-term momentum.
-                                </td>
-                              </tr>
-                              <tr>
-                                <td width="24" valign="top" style="font-size: 14px;">🏆</td>
-                                <td style="color: #5A4A3A; font-size: 13px; line-height: 1.4; padding-left: 8px;">
-                                  <strong>Group Leaderboard</strong> — Compete mindfully and celebrate each other's progress.
-                                </td>
-                              </tr>
-                            </table>
-                          </td>
-                        </tr>
-                      </table>
-
-                      <!-- Call to Action -->
-                      <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                        <tr>
-                          <td align="center">
-                            <a href="${inviteUrl}" style="display: inline-block; background-color: #1C1917; color: #FAF8F5; font-size: 15px; font-weight: 600; text-decoration: none; padding: 14px 36px; border-radius: 12px; box-shadow: 0 4px 12px rgba(28, 25, 23, 0.15); transition: background-color 0.2s;">
-                              Accept Invite
-                            </a>
-                          </td>
-                        </tr>
-                      </table>
-
-                      <!-- Copy Link Support -->
-                      <p style="color: #9A8070; font-size: 11px; text-align: center; margin: 28px 0 0 0; line-height: 1.5;">
-                        Button not working? Copy and paste this URL into your browser:<br>
-                        <a href="${inviteUrl}" style="color: #8C6E52; text-decoration: underline; word-break: break-all;">${inviteUrl}</a>
-                      </p>
-                    </td>
-                  </tr>
-
-                  <!-- Footer Area -->
-                  <tr>
-                    <td style="background-color: #FAF8F5; border-top: 1px solid rgba(100, 80, 60, 0.08); padding: 24px; text-align: center;">
-                      <p style="color: #9A8070; font-size: 12px; margin: 0 0 6px 0; font-weight: 500;">
-                        Habitly — Mindful Habit Tracking
-                      </p>
-                      <p style="color: #C4A882; font-size: 11px; font-style: italic; margin: 0;">
-                        "One habit, one star; your sky is yours alone."
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-                
-                <!-- Outside Footer Note -->
-                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 500px; margin-top: 20px;">
-                  <tr>
-                    <td align="center" style="color: #9A8070; font-size: 11px; line-height: 1.4; text-align: center; padding: 0 20px;">
-                      If you did not expect this invitation, you can safely ignore this email.
-                    </td>
-                  </tr>
-                </table>
-
-              </td>
-            </tr>
-          </table>
-        </body>
-        </html>
-      `,
-    })
-
-    group.invitedEmails = group.invitedEmails || []
-    group.invitedEmails.push({ email, sentAt: new Date() })
-    await group.save()
-
-    res.json({ message: `Invite sent to ${email}`, alreadySent: false })
   } catch (e) {
     console.error('Email invite error:', e)
     res.status(500).json({ message: 'Failed to send invite: ' + e.message })
