@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Soft dark stone background -->
+  <rect width="100" height="100" rx="20" fill="#1C1917"/>
+  <!-- Beige soil mound -->
+  <path d="M 30 75 Q 50 62 70 75 Z" fill="#C4A882"/>
+  <!-- Elegant green seedling leaves -->
+  <!-- Main stem -->
+  <path d="M 50 70 Q 50 45 42 35" fill="none" stroke="#4CAF50" stroke-width="4" stroke-linecap="round"/>
+  <path d="M 50 70 Q 50 50 58 38" fill="none" stroke="#4CAF50" stroke-width="4" stroke-linecap="round"/>
+  <!-- Left Leaf -->
+  <path d="M 42 35 C 32 35 28 45 42 50 C 46 44 48 40 42 35 Z" fill="#4CAF50"/>
+  <!-- Right Leaf -->
+  <path d="M 58 38 C 68 35 72 45 58 52 C 54 46 54 42 58 38 Z" fill="#81C784"/>
+</svg>

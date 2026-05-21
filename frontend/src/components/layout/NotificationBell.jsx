@@ -20,7 +20,7 @@ export default function NotificationBell() {
 
   useEffect(() => {
     loadUnread()
-    const id = setInterval(loadUnread, 20000)
+    const id = setInterval(loadUnread, 12000)
     const onVis = () => {
       if (document.visibilityState === 'visible') loadUnread()
     }

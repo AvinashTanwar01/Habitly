@@ -182,7 +182,7 @@ export default function Habits() {
                     <section className="min-w-0">
                       <p className="font-medium truncate">{h.name}</p>
                       <p className="text-xs text-[#9A8070] capitalize">
-                        {h.type} · {h.scheduleType}
+                        {h.type === 'yesno' ? 'Yes/No' : h.type} · {h.scheduleType}
                         {h.updatedAt && ` · Archived ${new Date(h.updatedAt).toLocaleDateString()}`}
                       </p>
                     </section>

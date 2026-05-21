@@ -266,14 +266,121 @@ exports.inviteByEmail = async (req, res) => {
       to: email,
       subject: `${leader.displayName} invited you to join ${group.name} on Habitly`,
       html: `
-        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#FAF8F5;">
-          <h2 style="color:#1C1917;margin-bottom:8px;">You're invited! 🌱</h2>
-          <p style="color:#5a4a3a;margin-bottom:4px;"><strong>${leader.displayName}</strong> has invited you to join the group <strong>${group.name}</strong> on Habitly.</p>
-          <p style="color:#8C6E52;font-size:13px;margin-bottom:24px;">Habitly helps you track habits, build streaks, and stay accountable with your team.</p>
-          <a href="${inviteUrl}" style="display:inline-block;background:#1C1917;color:white;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;">Accept Invite</a>
-          <p style="color:#8C6E52;font-size:12px;margin-top:24px;">Or copy this link: ${inviteUrl}</p>
-          <p style="color:#A08060;font-size:11px;margin-top:16px;">If you didn't expect this, you can ignore this email.</p>
-        </div>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>You're invited to Habitly</title>
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #FAF8F5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+          <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #FAF8F5; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <!-- Card Container -->
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 500px; background-color: #ffffff; border: 1px solid rgba(100, 80, 60, 0.12); border-radius: 16px; box-shadow: 0 4px 20px rgba(28, 25, 23, 0.03); overflow: hidden;">
+                  
+                  <!-- Header Banner -->
+                  <tr>
+                    <td align="center" style="background-color: #1C1917; padding: 32px 24px; text-align: center;">
+                      <!-- Logo Container -->
+                      <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                        <tr>
+                          <td style="background-color: #FAF8F5; border-radius: 10px; padding: 6px 10px; font-size: 20px; line-height: 1;">🌱</td>
+                          <td style="color: #FAF8F5; font-size: 22px; font-weight: 700; padding-left: 10px; letter-spacing: -0.5px;">Habitly</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  <!-- Content Body -->
+                  <tr>
+                    <td style="padding: 40px 32px;">
+                      <h2 style="color: #1C1917; font-size: 20px; font-weight: 700; margin: 0 0 16px 0; text-align: center; letter-spacing: -0.3px;">
+                        You're invited!
+                      </h2>
+                      
+                      <p style="color: #5A4A3A; font-size: 15px; line-height: 1.6; margin: 0 0 24px 0; text-align: center;">
+                        <strong>${leader.displayName}</strong> has invited you to join their group <strong style="color: #1C1917; border-bottom: 2px solid #C4A882; padding-bottom: 1px;">${group.name}</strong> on Habitly.
+                      </p>
+
+                      <!-- Feature Box -->
+                      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #FAF8F5; border-radius: 12px; border: 1px solid rgba(100, 80, 60, 0.06); margin-bottom: 28px;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="color: #9A8070; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 12px 0;">
+                              Why join Habitly?
+                            </p>
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                              <tr>
+                                <td width="24" valign="top" style="font-size: 14px; padding-bottom: 8px;">✨</td>
+                                <td style="color: #5A4A3A; font-size: 13px; line-height: 1.4; padding-left: 8px; padding-bottom: 8px;">
+                                  <strong>Shared Constellations</strong> — Watch your team's daily habits light up the sky.
+                                </td>
+                              </tr>
+                              <tr>
+                                <td width="24" valign="top" style="font-size: 14px; padding-bottom: 8px;">🔥</td>
+                                <td style="color: #5A4A3A; font-size: 13px; line-height: 1.4; padding-left: 8px; padding-bottom: 8px;">
+                                  <strong>Streaks & Accountability</strong> — Keep your flames burning and build long-term momentum.
+                                </td>
+                              </tr>
+                              <tr>
+                                <td width="24" valign="top" style="font-size: 14px;">🏆</td>
+                                <td style="color: #5A4A3A; font-size: 13px; line-height: 1.4; padding-left: 8px;">
+                                  <strong>Group Leaderboard</strong> — Compete mindfully and celebrate each other's progress.
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <!-- Call to Action -->
+                      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="${inviteUrl}" style="display: inline-block; background-color: #1C1917; color: #FAF8F5; font-size: 15px; font-weight: 600; text-decoration: none; padding: 14px 36px; border-radius: 12px; box-shadow: 0 4px 12px rgba(28, 25, 23, 0.15); transition: background-color 0.2s;">
+                              Accept Invite
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <!-- Copy Link Support -->
+                      <p style="color: #9A8070; font-size: 11px; text-align: center; margin: 28px 0 0 0; line-height: 1.5;">
+                        Button not working? Copy and paste this URL into your browser:<br>
+                        <a href="${inviteUrl}" style="color: #8C6E52; text-decoration: underline; word-break: break-all;">${inviteUrl}</a>
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- Footer Area -->
+                  <tr>
+                    <td style="background-color: #FAF8F5; border-top: 1px solid rgba(100, 80, 60, 0.08); padding: 24px; text-align: center;">
+                      <p style="color: #9A8070; font-size: 12px; margin: 0 0 6px 0; font-weight: 500;">
+                        Habitly — Mindful Habit Tracking
+                      </p>
+                      <p style="color: #C4A882; font-size: 11px; font-style: italic; margin: 0;">
+                        "One habit, one star; your sky is yours alone."
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+                
+                <!-- Outside Footer Note -->
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 500px; margin-top: 20px;">
+                  <tr>
+                    <td align="center" style="color: #9A8070; font-size: 11px; line-height: 1.4; text-align: center; padding: 0 20px;">
+                      If you did not expect this invitation, you can safely ignore this email.
+                    </td>
+                  </tr>
+                </table>
+
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
       `,
     })
 

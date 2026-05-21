@@ -19,8 +19,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || 'Habitly', {
       body: data.body || '',
-      icon: '/favicon.ico',
-      badge: '/favicon.ico',
+      icon: '/logo.png',
+      badge: '/logo.png',
       tag,
       renotify: true,
       requireInteraction: false,

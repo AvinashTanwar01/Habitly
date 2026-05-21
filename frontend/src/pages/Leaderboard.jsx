@@ -83,7 +83,7 @@ export default function Leaderboard() {
           />
         </section>
 
-        <section className="bg-[#1C1917] text-[#FAF8F5] p-4 sm:p-6 lg:p-8 flex flex-col border-t lg:border-t-0 lg:border-l border-[#2a2624] order-2 min-h-0 max-h-[55vh] lg:max-h-none">
+        <section className="bg-[#1C1917] text-[#FAF8F5] p-4 sm:p-6 lg:p-8 flex flex-col border-t lg:border-t-0 lg:border-l border-[#2a2624] order-2 min-h-0 max-h-none lg:max-h-none">
           <header className="mb-4 sm:mb-6">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight">Global Leaderboard</h1>
             <p className="text-sm text-[#9A8070] mt-2">Ranked by current streak across all dimensions.</p>
@@ -110,7 +110,7 @@ export default function Leaderboard() {
             <p className="mb-4 p-3 bg-red-950/40 border border-red-800 text-red-300 text-sm rounded-xl">{error}</p>
           )}
 
-          <ul className="space-y-0 flex-1 overflow-y-auto -mx-2">
+          <ul className="space-y-0 lg:flex-1 lg:overflow-y-auto -mx-2">
             {loading ? (
               <li className="text-sm text-[#9A8070] py-8 px-2">Loading rankings…</li>
             ) : listRows.length === 0 ? (

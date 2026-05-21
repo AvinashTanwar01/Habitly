@@ -30,6 +30,15 @@ function ProgressRing({ pct, size = 44 }) {
   )
 }
 
+function formatValue(val, type) {
+  if (type !== 'time') return val
+  const h = Math.floor(val / 60)
+  const m = val % 60
+  if (h > 0 && m > 0) return `${h}h ${m}m`
+  if (h > 0) return `${h}h`
+  return `${m}m`
+}
+
 export default function HabitDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -60,6 +69,14 @@ export default function HabitDetail() {
     habitService.getOne(id).then(setData).catch(() => navigate('/habits'))
   }
 
+  useEffect(() => {
+    if (data?.todayCompletion) {
+      setAmount(String(data.todayCompletion.actualAmount || ''))
+    } else {
+      setAmount('')
+    }
+  }, [data?.todayCompletion])
+
   if (!data) {
     return (
       <PageContent>
@@ -79,9 +96,11 @@ export default function HabitDetail() {
   const rate = completionRate(completions, habit.scheduleType, habit.scheduleDays)
   const notes = JSON.parse(localStorage.getItem(notesKey) || '[]')
   const today = getEffectiveToday(new Date(), user?.resetTime)
-  const todayPct = todayCompletion?.isDone
-    ? Math.min(100, ((todayCompletion.actualAmount || 1) / (habit.target || 1)) * 100)
-    : 0
+  const todayPct = habit.type === 'yesno'
+    ? (todayCompletion?.isDone ? 100 : 0)
+    : (todayCompletion
+        ? Math.min(100, ((todayCompletion.actualAmount || 0) / (habit.target || 1)) * 100)
+        : 0)
 
   const complete = async () => {
     await habitService.complete(id, {
@@ -116,7 +135,7 @@ export default function HabitDetail() {
     const dow = (new Date(today).getDay() + 6) % 7
     const date = addDays(today, i - dow)
     const c = completions.find((x) => x.date === date)
-    const mins = c?.isDone ? c.actualAmount || habit.target || 0 : 0
+    const mins = c ? c.actualAmount || 0 : 0
     return { label: weekDays[i], mins }
   })
   const weekTotal = weekBars.reduce((s, b) => s + b.mins, 0)
@@ -124,7 +143,7 @@ export default function HabitDetail() {
 
   const subtitle =
     habit.type === 'time'
-      ? `${habit.target} minutes of ${habit.name.toLowerCase()}`
+      ? `${formatValue(habit.target, 'time')} of ${habit.name.toLowerCase()}`
       : habit.type === 'count'
         ? `Target ${habit.target} per day`
         : habit.scheduleType === 'daily'
@@ -159,8 +178,10 @@ export default function HabitDetail() {
           <p className="text-sm font-medium text-[#1C1917]">
             Did you {habit.name.toLowerCase()} today?
           </p>
-          {todayCompletion?.isDone ? (
-            <p className="text-xs text-green-700 mt-0.5">Logged — {todayCompletion.actualAmount}{habit.type === 'time' ? ' min' : ''}</p>
+          {todayCompletion ? (
+            <p className={`text-xs mt-0.5 ${todayCompletion.isDone ? 'text-green-700 font-medium' : 'text-[#8C6E52]'}`}>
+              {todayCompletion.isDone ? 'Completed' : 'Logged progress'} — {formatValue(todayCompletion.actualAmount, habit.type)} / {formatValue(habit.target, habit.type)}
+            </p>
           ) : null}
         </section>
         {(habit.type === 'time' || habit.type === 'count') && !todayCompletion?.isDone && (
@@ -245,8 +266,8 @@ export default function HabitDetail() {
         <section className="space-y-4">
           <article className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl p-5 text-sm space-y-2">
             <h2 className="text-sm font-semibold mb-3">Habit details</h2>
-            <p className="flex justify-between"><span className="text-[#9A8070]">Type</span><span className="capitalize">{habit.type}</span></p>
-            <p className="flex justify-between"><span className="text-[#9A8070]">Target</span><span>{habit.target}{habit.type === 'time' ? ' min' : ''}</span></p>
+            <p className="flex justify-between"><span className="text-[#9A8070]">Type</span><span className="capitalize">{habit.type === 'yesno' ? 'Yes/No' : habit.type}</span></p>
+            <p className="flex justify-between"><span className="text-[#9A8070]">Target</span><span>{formatValue(habit.target, habit.type)}</span></p>
             <p className="flex justify-between"><span className="text-[#9A8070]">Schedule</span><span className="capitalize">{habit.scheduleType}</span></p>
             <p className="flex justify-between"><span className="text-[#9A8070]">Reminder</span><span>{habit.reminderTime || '—'}</span></p>
             <p className="flex justify-between"><span className="text-[#9A8070]">Start date</span><span>{new Date(habit.createdAt).toLocaleDateString()}</span></p>
@@ -255,7 +276,9 @@ export default function HabitDetail() {
           <article className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl p-5">
             <header className="flex justify-between items-baseline mb-3">
               <h2 className="text-sm font-semibold">Weekly performance</h2>
-              <span className="text-xs font-mono text-[#8C6E52]">{weekTotal} min</span>
+              <span className="text-xs font-mono text-[#8C6E52]">
+                {habit.type === 'time' ? `${formatValue(weekTotal, 'time')}` : `${weekTotal} ${habit.type === 'count' ? 'sessions' : 'completed'}`}
+              </span>
             </header>
             <section className="flex items-end gap-2 h-28">
               {weekBars.map((b) => (

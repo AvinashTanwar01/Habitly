@@ -7,4 +7,6 @@ const completionSchema = new mongoose.Schema({
   actualAmount: { type: Number },
 }, { timestamps: true })
 completionSchema.index({ habitId: 1, date: 1 }, { unique: true })
+completionSchema.index({ userId: 1, date: 1 })
+completionSchema.index({ userId: 1, habitId: 1 })
 module.exports = mongoose.model('Completion', completionSchema)

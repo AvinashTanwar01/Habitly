@@ -100,6 +100,24 @@ exports.update = async (req, res) => {
     await assertLeader(task.groupId, req.user._id)
     Object.assign(task, req.body)
     await task.save()
+
+    const group = await Group.findById(task.groupId).select('name')
+    const members = await GroupMember.find({ groupId: task.groupId })
+    const leaderName = req.user.displayName || 'Leader'
+    const deadlineStr = new Date(task.deadline).toLocaleDateString()
+    void Promise.allSettled(
+      members.map((m) => {
+        if (task.assignedTo && String(task.assignedTo) !== String(m.userId)) return Promise.resolve()
+        if (String(m.userId) === String(req.user._id)) return Promise.resolve()
+        return notifyUser(m.userId, {
+          type: 'task',
+          title: 'Group task updated',
+          body: `${leaderName} updated "${task.title}" in ${group?.name || 'your group'} (due ${deadlineStr})`,
+          url: `/groups/${task.groupId}`,
+        })
+      })
+    )
+
     res.json(task)
   } catch (e) {
     if (e.message === 'NOT_LEADER') return res.status(403).json({ message: 'Leader only' })
@@ -136,16 +154,20 @@ exports.complete = async (req, res) => {
       { completedAt: now, completedEarly },
       { upsert: true, new: true }
     )
-    if (completedEarly) {
-      const group = await Group.findById(task.groupId)
-      if (group) {
-        const member = await User.findById(req.user._id).select('displayName')
-        await sendToUser(group.leaderId, {
-          title: '⚡ Early completion!',
-          body: `${member?.displayName || 'Someone'} completed '${task.title}' ahead of schedule!`,
-          url: `/groups/${task.groupId}/leader`,
-        })
-      }
+    const group = await Group.findById(task.groupId)
+    if (group && String(group.leaderId) !== String(req.user._id)) {
+      const member = await User.findById(req.user._id).select('displayName')
+      const title = completedEarly ? '⚡ Early completion!' : 'Task completed'
+      const body = completedEarly
+        ? `${member?.displayName || 'Someone'} completed '${task.title}' ahead of schedule!`
+        : `${member?.displayName || 'Someone'} completed '${task.title}'`
+
+      await notifyUser(group.leaderId, {
+        type: 'task',
+        title,
+        body,
+        url: `/groups/${task.groupId}/leader`,
+      })
     }
     res.json(completion)
   } catch (e) {

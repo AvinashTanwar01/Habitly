@@ -404,13 +404,43 @@ export default function Landing() {
             </ul>
           </div>
         </div>
-        <div className="max-w-6xl mx-auto px-5 md:px-8 pb-8 flex flex-col sm:flex-row justify-between gap-2 text-xs text-[#9A8070] border-t border-[rgba(100,80,60,0.08)] pt-6">
-          <span>© {new Date().getFullYear()} Habitly. All rights reserved.</span>
-          {stats.habitsTracked > 0 && (
-            <span className="font-mono">
-              {stats.habitsTracked} habits · {stats.activeStreaks} active streaks in our sky
-            </span>
-          )}
+        <div className="max-w-6xl mx-auto px-5 md:px-8 pb-8 border-t border-[rgba(100,80,60,0.08)] pt-8 mt-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-[#9A8070] mb-6">
+            <div className="flex flex-col gap-1 items-center md:items-start text-center md:text-left">
+              <span className="font-medium text-[#1C1917]">
+                Created by <a href="https://github.com/AvinashTanwar01" target="_blank" rel="noopener noreferrer" className="hover:text-[#8C6E52] transition-colors underline decoration-dotted">Avinash Tanwar</a>
+              </span>
+              <p className="text-xs text-[#C4A882] italic">
+                Please support it by sharing to others! 🌱
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <a
+                href="https://www.linkedin.com/in/avinash-tanwar/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FAF8F5] border border-[rgba(100,80,60,0.15)] hover:border-[#8C6E52] hover:text-[#1C1917] transition-all text-xs"
+              >
+                <i className="ti ti-brand-linkedin text-base text-[#0077B5]" /> LinkedIn
+              </a>
+              <a
+                href="https://github.com/AvinashTanwar01"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FAF8F5] border border-[rgba(100,80,60,0.15)] hover:border-[#8C6E52] hover:text-[#1C1917] transition-all text-xs"
+              >
+                <i className="ti ti-brand-github text-base text-[#1C1917]" /> GitHub
+              </a>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row justify-between gap-2 text-xs text-[#9A8070]/80 pt-4 border-t border-[rgba(100,80,60,0.05)]">
+            <span>© {new Date().getFullYear()} Habitly. All rights reserved.</span>
+            {stats.habitsTracked > 0 && (
+              <span className="font-mono">
+                {stats.habitsTracked} habits · {stats.activeStreaks} active streaks in our sky
+              </span>
+            )}
+          </div>
         </div>
       </footer>
     </div>

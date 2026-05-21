@@ -77,7 +77,7 @@ export default function HabitForm({ open, onClose, onSave, initial }) {
               {[
                 { k: 'time', l: '⏱ Time' },
                 { k: 'count', l: '🔢 Count' },
-                { k: 'yesno', l: '✅ Yes-No' },
+                { k: 'yesno', l: '✅ Yes/No' },
               ].map(({ k, l }) => (
                 <button
                   key={k}
@@ -90,8 +90,48 @@ export default function HabitForm({ open, onClose, onSave, initial }) {
               ))}
             </section>
           </section>
-          {form.type !== 'yesno' && (
-            <Input label="Target" type="number" value={form.target} onChange={(e) => set('target', Number(e.target.value))} />
+          {form.type === 'time' && (
+            <section className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-[#9A8070] mb-2 font-medium">Hours</p>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  className="w-full border border-[rgba(100,80,60,0.2)] rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#8C6E52] transition-colors"
+                  value={Math.floor((form.target || 0) / 60) || ''}
+                  onChange={(e) => {
+                    const hrs = Math.max(0, parseInt(e.target.value, 10) || 0)
+                    const mins = (form.target || 0) % 60
+                    set('target', hrs * 60 + mins)
+                  }}
+                />
+              </div>
+              <div>
+                <p className="text-xs text-[#9A8070] mb-2 font-medium">Minutes</p>
+                <input
+                  type="number"
+                  min="0"
+                  max="59"
+                  placeholder="0"
+                  className="w-full border border-[rgba(100,80,60,0.2)] rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#8C6E52] transition-colors"
+                  value={(form.target || 0) % 60 || ''}
+                  onChange={(e) => {
+                    const mins = Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0))
+                    const hrs = Math.floor((form.target || 0) / 60)
+                    set('target', hrs * 60 + mins)
+                  }}
+                />
+              </div>
+            </section>
+          )}
+          {form.type === 'count' && (
+            <Input
+              label="Target Count"
+              type="number"
+              value={form.target}
+              onChange={(e) => set('target', Math.max(1, Number(e.target.value) || 1))}
+            />
           )}
           <section>
             <p className="text-xs text-[#9A8070] mb-2">Schedule</p>

@@ -2,6 +2,15 @@ import { useNavigate } from 'react-router-dom'
 import { calcStreak, completionRate } from '../../utils/streakUtils'
 import { useAuth } from '../../context/AuthContext'
 
+function formatValue(val, type) {
+  if (type !== 'time') return val
+  const h = Math.floor(val / 60)
+  const m = val % 60
+  if (h > 0 && m > 0) return `${h}h ${m}m`
+  if (h > 0) return `${h}h`
+  return `${m}m`
+}
+
 export default function HabitCard({ habit, onEdit, onArchive, onDelete }) {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -26,7 +35,10 @@ export default function HabitCard({ habit, onEdit, onArchive, onDelete }) {
             <span className="w-10 h-10 bg-[#F2EDE6] rounded-lg flex items-center justify-center text-xl">{habit.icon}</span>
             <section className="flex-1 min-w-0">
               <h3 className="font-medium truncate">{habit.name}</h3>
-              <p className="text-xs text-[#9A8070] capitalize">{habit.type}{habit.type !== 'yesno' ? ` · ${habit.target}` : ''}</p>
+              <p className="text-xs text-[#9A8070] capitalize">
+                {habit.type === 'yesno' ? 'Yes/No' : habit.type}
+                {habit.type !== 'yesno' ? ` · ${formatValue(habit.target, habit.type)}` : ''}
+              </p>
             </section>
             <section className="flex gap-1" onClick={(e) => e.stopPropagation()}>
               <button type="button" onClick={() => onEdit(habit)} className="p-1.5 border border-[rgba(100,80,60,0.2)] rounded-lg text-[#8C6E52]"><i className="ti ti-edit" /></button>

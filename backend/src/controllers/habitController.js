@@ -228,9 +228,10 @@ exports.complete = async (req, res) => {
     if (!habit) return res.status(404).json({ message: 'Not found' })
     const date = req.body.date || getEffectiveToday(new Date(), req.user.resetTime)
     const actualAmount = req.body.actualAmount ?? (habit.type === 'yesno' ? 1 : habit.target)
+    const isDone = actualAmount >= habit.target
     const completion = await Completion.findOneAndUpdate(
       { habitId: habit._id, userId: req.user._id, date },
-      { isDone: true, actualAmount },
+      { isDone, actualAmount },
       { upsert: true, new: true },
     )
     res.json(completion)
@@ -246,7 +247,7 @@ exports.uncomplete = async (req, res) => {
     const date = req.body.date || getEffectiveToday(new Date(), req.user.resetTime)
     const completion = await Completion.findOneAndUpdate(
       { habitId: habit._id, userId: req.user._id, date },
-      { isDone: false },
+      { isDone: false, actualAmount: 0 },
       { upsert: true, new: true },
     )
     res.json(completion)

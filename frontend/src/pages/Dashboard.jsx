@@ -54,6 +54,15 @@ function ProgressRing({ done, total }) {
   )
 }
 
+function formatValue(val, type) {
+  if (type !== 'time') return val
+  const h = Math.floor(val / 60)
+  const m = val % 60
+  if (h > 0 && m > 0) return `${h}h ${m}m`
+  if (h > 0) return `${h}h`
+  return `${m}m`
+}
+
 export default function Dashboard() {
   const { user } = useAuth()
   const { toast } = useToast()
@@ -150,17 +159,19 @@ export default function Dashboard() {
     try {
       if (habit.isDone) {
         await habitService.uncomplete(habit._id, {})
+        setAmounts((p) => ({ ...p, [habit._id]: '' }))
         toast?.info?.(`Unchecked: ${habit.name}`)
       } else {
-        const amt = amounts[habit._id]
-        if ((habit.type === 'time' || habit.type === 'count') && !amt) {
-          toast?.error?.('Enter an amount first')
-          return
-        }
+        const amt = amounts[habit._id] !== undefined ? amounts[habit._id] : habit.actualAmount
+        const targetAmt = Number(amt || habit.target)
         await habitService.complete(habit._id, {
-          actualAmount: habit.type === 'yesno' ? 1 : Number(amt || habit.target),
+          actualAmount: habit.type === 'yesno' ? 1 : targetAmt,
         })
-        toast?.success?.(`${habit.name} completed — streak growing!`)
+        if (targetAmt >= habit.target) {
+          toast?.success?.(`${habit.name} completed — streak growing!`)
+        } else {
+          toast?.info?.(`Progress logged for ${habit.name}: ${formatValue(targetAmt, habit.type)}/${formatValue(habit.target, habit.type)}`)
+        }
       }
       load()
     } catch (err) {
@@ -274,68 +285,93 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="px-4 space-y-2">
-              {habits.map((h) => (
-                <div
-                  key={h._id}
-                  className={`flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 rounded-xl p-3 sm:p-3.5 border transition-all ${
-                    h.isDone
-                      ? 'bg-[#FAF8F5] border-[rgba(100,80,60,0.08)]'
-                      : 'bg-white border-[rgba(100,80,60,0.12)] hover:border-[rgba(100,80,60,0.22)]'
-                  }`}
-                >
-                  {/* Icon */}
-                  <Link
-                    to={`/habits/${h._id}`}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
-                    style={{ background: h.color ? `${h.color}20` : '#F2EDE6' }}
-                  >
-                    {h.icon}
-                  </Link>
-
-                  {/* Name + meta */}
-                  <Link to={`/habits/${h._id}`} className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium ${h.isDone ? 'line-through text-[#9A8070]' : 'text-[#1C1917]'}`}>
-                      {h.name}
-                    </p>
-                    <p className="text-xs text-[#9A8070] mt-0.5 capitalize">
-                      {h.scheduleType}
-                      {h.type !== 'yesno' && h.target ? ` · ${h.target}` : ''}
-                      {h.isDone ? ' · Completed' : ''}
-                    </p>
-                  </Link>
-
-                  {/* Streak badge */}
-                  <span className="text-xs font-mono text-[#C4A882] shrink-0 order-3 sm:order-none">
-                    🔥 {h.currentStreak || 0}
-                  </span>
-
-                  {/* Amount input */}
-                  {(h.type === 'time' || h.type === 'count') && !h.isDone && (
-                    <input
-                      type="number"
-                      className="w-14 px-2 py-1.5 border border-[rgba(100,80,60,0.2)] rounded-lg text-sm bg-white text-center focus:outline-none focus:border-[#8C6E52]"
-                      placeholder={String(h.target || '')}
-                      value={amounts[h._id] || ''}
-                      onChange={(e) =>
-                        setAmounts((p) => ({ ...p, [h._id]: e.target.value }))
-                      }
-                    />
-                  )}
-
-                  {/* Checkbox */}
-                  <button
-                    type="button"
-                    onClick={() => toggle(h)}
-                    className={`w-9 h-9 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+              {habits.map((h) => {
+                const formattedTarget = formatValue(h.target, h.type)
+                const currentVal = amounts[h._id] !== undefined ? amounts[h._id] : (h.actualAmount || '')
+                return (
+                  <div
+                    key={h._id}
+                    className={`flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 rounded-xl p-3 sm:p-3.5 border transition-all ${
                       h.isDone
-                        ? 'bg-[#C4A882] border-[#C4A882] text-white'
-                        : 'border-[rgba(100,80,60,0.25)] hover:border-[#8C6E52] bg-white'
+                        ? 'bg-[#FAF8F5] border-[rgba(100,80,60,0.08)]'
+                        : 'bg-white border-[rgba(100,80,60,0.12)] hover:border-[rgba(100,80,60,0.22)]'
                     }`}
                   >
-                    {h.isDone ? '✓' : ''}
-                  </button>
-                </div>
-              ))}
+                    {/* Icon */}
+                    <Link
+                      to={`/habits/${h._id}`}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
+                      style={{ background: h.color ? `${h.color}20` : '#F2EDE6' }}
+                    >
+                      {h.icon}
+                    </Link>
+
+                    {/* Name + meta */}
+                    <Link to={`/habits/${h._id}`} className="flex-1 min-w-0">
+                      <p className={`text-sm font-medium ${h.isDone ? 'line-through text-[#9A8070]' : 'text-[#1C1917]'}`}>
+                        {h.name}
+                      </p>
+                      <p className="text-xs text-[#9A8070] mt-0.5 capitalize">
+                        {h.scheduleType}
+                        {h.type !== 'yesno' && h.target ? ` · ${formattedTarget}` : ''}
+                        {h.isDone ? ' · Completed' : ''}
+                      </p>
+                    </Link>
+
+                    {/* Streak badge */}
+                    <span className="text-xs font-mono text-[#C4A882] shrink-0 order-3 sm:order-none">
+                      🔥 {h.currentStreak || 0}
+                    </span>
+
+                    {/* Amount input */}
+                    {(h.type === 'time' || h.type === 'count') && !h.isDone && (
+                      <input
+                        type="number"
+                        className="w-14 px-2 py-1.5 border border-[rgba(100,80,60,0.2)] rounded-lg text-sm bg-white text-center focus:outline-none focus:border-[#8C6E52]"
+                        placeholder={String(h.target || '')}
+                        value={currentVal}
+                        onChange={(e) =>
+                          setAmounts((p) => ({ ...p, [h._id]: e.target.value }))
+                        }
+                      />
+                    )}
+
+                    {/* Checkbox */}
+                    <button
+                      type="button"
+                      onClick={() => toggle(h)}
+                      className={`w-9 h-9 rounded-full border-2 flex items-center justify-center shrink-0 transition-all relative ${
+                        h.isDone
+                          ? 'bg-[#C4A882] border-[#C4A882] text-white'
+                          : 'border-[rgba(100,80,60,0.25)] hover:border-[#8C6E52] bg-white'
+                      }`}
+                    >
+                      {h.isDone ? (
+                        '✓'
+                      ) : h.actualAmount > 0 && h.target > 0 ? (
+                        <svg width="32" height="32" viewBox="0 0 32 32" className="absolute inset-0 m-auto">
+                          <circle cx="16" cy="16" r="13" fill="none" stroke="#FAF8F5" strokeWidth="2" />
+                          <circle
+                            cx="16" cy="16" r="13"
+                            fill="none"
+                            stroke="#C4A882"
+                            strokeWidth="3"
+                            strokeDasharray={2 * Math.PI * 13}
+                            strokeDashoffset={2 * Math.PI * 13 * (1 - Math.min(1, h.actualAmount / h.target))}
+                            strokeLinecap="round"
+                            transform="rotate(-90 16 16)"
+                          />
+                          <text x="16" y="19" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#8C6E52">
+                            {Math.round((h.actualAmount / h.target) * 100)}%
+                          </text>
+                        </svg>
+                      ) : (
+                        ''
+                      )}
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           )}
 
@@ -351,21 +387,38 @@ export default function Dashboard() {
                 const isDone  = denom > 0 ? raw >= denom : raw > 0
                 const isToday = i === todayIdx
                 const isFuture = todayIdx !== -1 && i > todayIdx
+                const pct = weekly.thisWeekRates?.length === 7 ? weekly.thisWeekRates[i] : (isDone ? 100 : 0)
+
                 return (
                   <div key={i} className="flex flex-col items-center gap-1.5 flex-1">
-                    <div
-                      className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all
-                        ${isDone
-                          ? 'bg-[#1C1917] text-white'
-                          : isToday
-                          ? 'bg-[#F2EDE6] border-2 border-[#C4A882] text-[#8C6E52]'
-                          : isFuture
-                          ? 'bg-[#F2EDE6] text-[#C4B8A0]'
-                          : 'bg-[#F2EDE6] text-[#9A8070]'
-                        }`}
-                    >
-                      {isDone ? '✓' : ''}
-                    </div>
+                    {pct >= 100 || isDone ? (
+                      <div
+                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-xs font-semibold bg-[#1C1917] text-white transition-all shadow-sm"
+                      >
+                        ✓
+                      </div>
+                    ) : pct > 0 ? (
+                      <div
+                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-[8px] sm:text-[9px] font-bold border border-[#C4A882]/40 relative overflow-hidden transition-all shadow-sm"
+                        style={{
+                          background: `linear-gradient(to top, #C4A882 ${pct}%, #F2EDE6 ${pct}%)`
+                        }}
+                      >
+                        <span className={pct > 50 ? 'text-white' : 'text-[#8C6E52]'}>
+                          {pct}%
+                        </span>
+                      </div>
+                    ) : (
+                      <div
+                        className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all
+                          ${isToday
+                            ? 'bg-[#F2EDE6] border-2 border-[#C4A882] text-[#8C6E52]'
+                            : isFuture
+                            ? 'bg-[#F2EDE6] text-[#C4B8A0]'
+                            : 'bg-[#F2EDE6] text-[#9A8070]'
+                          }`}
+                      />
+                    )}
                     <span className="text-[9px] text-[#9A8070]">
                       {typeof d === 'string' ? d[0] : d}
                     </span>

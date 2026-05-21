@@ -48,7 +48,7 @@ export default function ProfileMenu() {
 
       {open && (
         <div
-          className="absolute right-0 z-[100] min-w-[200px] max-w-[min(280px,calc(100vw-2rem))] bg-white border border-[rgba(100,80,60,0.15)] rounded-xl shadow-lg py-2 animate-[fadeIn_0.15s_ease-out] md:top-10 md:bottom-auto bottom-11"
+          className="absolute right-0 z-[100] min-w-[200px] max-w-[min(280px,calc(100vw-2rem))] bg-white border border-[rgba(100,80,60,0.15)] rounded-xl shadow-lg py-2 animate-[fadeIn_0.15s_ease-out] top-full mt-2"
         >
           <div className="px-3.5 py-2.5 border-b border-[rgba(100,80,60,0.1)]">
             <p className="text-sm font-semibold text-[#1C1917] truncate">{user?.displayName}</p>

@@ -1,7 +1,7 @@
 const User = require('../models/userModel')
 const Habit = require('../models/habitModel')
 const Completion = require('../models/completionModel')
-const { calcStreak, isScheduled, addDays, getEffectiveToday, mondayOfWeekContaining } = require('../utils/streakUtils')
+const { calcStreak, isScheduled, addDays, getEffectiveToday, mondayOfWeekContaining, getScheduledDates } = require('../utils/streakUtils')
 
 let leaderboardCache = { data: null, expires: 0 }
 
@@ -121,6 +121,8 @@ exports.getWeekly = async (req, res) => {
     const lastWeek = []
     const scheduledThisWeek = []
     const scheduledLastWeek = []
+    const thisWeekRates = []
+    const lastWeekRates = []
     let todayWeekIndex = -1
 
     const weekDates = []
@@ -135,14 +137,13 @@ exports.getWeekly = async (req, res) => {
           userId: req.user._id,
           habitId: { $in: habitIds },
           date: { $in: weekDates },
-          isDone: true,
         })
-          .select('habitId date')
+          .select('habitId date isDone actualAmount')
           .lean()
           .maxTimeMS(8000)
       : []
 
-    const doneSet = new Set(doneCompletions.map((c) => `${c.habitId}:${c.date}`))
+    const compMap = new Map(doneCompletions.map((c) => [`${c.habitId}:${c.date}`, c]))
 
     const habitBreakdown = habits.map((h) => {
       const thisWeekDays = []
@@ -152,13 +153,15 @@ exports.getWeekly = async (req, res) => {
         const lastDate = addDays(monday, i - 7)
         const sched = isScheduled(date, h.scheduleType, h.scheduleDays)
         const schedL = isScheduled(lastDate, h.scheduleType, h.scheduleDays)
+        const cThis = compMap.get(`${h._id}:${date}`)
+        const cLast = compMap.get(`${h._id}:${lastDate}`)
         thisWeekDays.push({
           scheduled: sched,
-          completed: sched && doneSet.has(`${h._id}:${date}`),
+          completed: sched && !!cThis?.isDone,
         })
         lastWeekDays.push({
           scheduled: schedL,
-          completed: schedL && doneSet.has(`${h._id}:${lastDate}`),
+          completed: schedL && !!cLast?.isDone,
         })
       }
       return {
@@ -179,20 +182,48 @@ exports.getWeekly = async (req, res) => {
       let lw = 0
       let sw = 0
       let sl = 0
+      let twSumFraction = 0
+      let lwSumFraction = 0
+
       for (const h of habits) {
         if (isScheduled(date, h.scheduleType, h.scheduleDays)) {
           sw++
-          if (doneSet.has(`${h._id}:${date}`)) tw++
+          const c = compMap.get(`${h._id}:${date}`)
+          if (c) {
+            if (c.isDone) tw++
+            let frac = 0
+            if (h.type === 'yesno') {
+              frac = c.isDone ? 1 : 0
+            } else {
+              frac = Math.min(1, (c.actualAmount || 0) / (h.target || 1))
+            }
+            twSumFraction += frac
+          }
         }
         if (isScheduled(lastDate, h.scheduleType, h.scheduleDays)) {
           sl++
-          if (doneSet.has(`${h._id}:${lastDate}`)) lw++
+          const c = compMap.get(`${h._id}:${lastDate}`)
+          if (c) {
+            if (c.isDone) lw++
+            let frac = 0
+            if (h.type === 'yesno') {
+              frac = c.isDone ? 1 : 0
+            } else {
+              frac = Math.min(1, (c.actualAmount || 0) / (h.target || 1))
+            }
+            lwSumFraction += frac
+          }
         }
       }
       thisWeek.push(tw)
       lastWeek.push(lw)
       scheduledThisWeek.push(sw)
       scheduledLastWeek.push(sl)
+
+      const twRate = sw > 0 ? Math.round((twSumFraction / sw) * 100) : 0
+      const lwRate = sl > 0 ? Math.round((lwSumFraction / sl) * 100) : 0
+      thisWeekRates.push(twRate)
+      lastWeekRates.push(lwRate)
     }
     res.json({
       thisWeek,
@@ -201,6 +232,8 @@ exports.getWeekly = async (req, res) => {
       scheduledThisWeek,
       scheduledLastWeek,
       todayWeekIndex,
+      thisWeekRates,
+      lastWeekRates,
       habitBreakdown,
     })
   } catch (e) {
@@ -232,11 +265,43 @@ exports.getSummary = async (req, res) => {
       bestCurrent = Math.max(bestCurrent, s.currentStreak)
       bestAll = Math.max(bestAll, s.longestStreak)
     }
+
+    // New completionRate and doneThisWeek calculations
+    let totalScheduledOccurrences = 0
+    let totalDoneOccurrences = 0
+
+    const today = getEffectiveToday(new Date(), req.user.resetTime)
+    const start = addDays(today, -29) // last 30 days
+    const monday = mondayOfWeekContaining(today)
+    const thisWeekDates = new Set()
+    for (let i = 0; i < 7; i++) {
+      thisWeekDates.add(addDays(monday, i))
+    }
+
+    let doneThisWeek = 0
+
+    for (const h of habits) {
+      const dates = compsByHabit.get(String(h._id)) || []
+      const doneDatesSet = new Set(dates.map((c) => c.date))
+      
+      const scheduled = getScheduledDates(start, today, h.scheduleType, h.scheduleDays)
+      totalScheduledOccurrences += scheduled.length
+      totalDoneOccurrences += scheduled.filter((d) => doneDatesSet.has(d)).length
+
+      doneThisWeek += dates.filter((c) => thisWeekDates.has(c.date)).length
+    }
+
+    const completionRate = totalScheduledOccurrences > 0
+      ? Math.round((totalDoneOccurrences / totalScheduledOccurrences) * 100)
+      : 0
+
     res.json({
       totalHabits: habits.length,
       totalCompletions: completions.length,
       bestCurrentStreak: bestCurrent,
       allTimeBestStreak: bestAll,
+      completionRate,
+      doneThisWeek,
     })
   } catch (e) {
     res.status(500).json({ message: e.message })

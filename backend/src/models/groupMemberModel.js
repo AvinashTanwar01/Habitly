@@ -8,5 +8,6 @@ const groupMemberSchema = new mongoose.Schema({
 })
 
 groupMemberSchema.index({ groupId: 1, userId: 1 }, { unique: true })
+groupMemberSchema.index({ userId: 1 })
 
 module.exports = mongoose.model('GroupMember', groupMemberSchema)
