@@ -136,10 +136,10 @@ export default function Login() {
   }
 
   return (
-    <section className="min-h-screen relative flex items-center justify-center p-4">
+    <section className="min-h-dvh relative flex items-center justify-center p-3 sm:p-4 overflow-x-hidden">
       <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }} />
-      <section className="w-full max-w-4xl grid md:grid-cols-2 rounded-2xl overflow-hidden shadow-xl relative z-10">
-        <aside className="bg-[#1C1917] text-[#FAF8F5] p-8 flex flex-col justify-between">
+      <section className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 rounded-2xl overflow-hidden shadow-xl relative z-10 max-h-[calc(100dvh-1.5rem)] md:max-h-none">
+        <aside className="bg-[#1C1917] text-[#FAF8F5] p-6 sm:p-8 flex flex-col justify-between order-2 md:order-1">
           <header>
             <p className="text-lg font-semibold mb-6">🌱 Habitly</p>
             <h1 className="text-2xl font-semibold leading-snug">
@@ -155,7 +155,7 @@ export default function Login() {
           <p className="text-xs text-[#9A8070]">Leaderboard streaks are public.</p>
         </aside>
 
-        <section className="bg-[#F2EDE6] p-8">
+        <section className="bg-[#F2EDE6] p-5 sm:p-8 overflow-y-auto order-1 md:order-2">
           <nav className="flex gap-2 mb-6">
             {['login', 'signup'].map((t) => (
               <button

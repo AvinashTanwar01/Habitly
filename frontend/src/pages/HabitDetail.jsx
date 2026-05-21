@@ -153,7 +153,7 @@ export default function HabitDetail() {
         />
       </article>
 
-      <article className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl px-4 py-3 mb-6 flex flex-wrap items-center gap-4">
+      <article className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl px-4 py-4 mb-6 flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 sm:gap-4">
         <ProgressRing pct={todayPct} />
         <section className="flex-1 min-w-[140px]">
           <p className="text-sm font-medium text-[#1C1917]">
@@ -173,20 +173,20 @@ export default function HabitDetail() {
           />
         )}
         {!todayCompletion?.isDone && (
-          <Button onClick={complete} className="shrink-0">
+          <Button onClick={complete} className="w-full sm:w-auto shrink-0 min-h-[44px]">
             Log today
           </Button>
         )}
         <button
           type="button"
           onClick={() => setEditOpen(true)}
-          className="text-xs text-[#8C6E52] hover:underline ml-auto"
+          className="text-xs text-[#8C6E52] hover:underline sm:ml-auto"
         >
           Edit habit
         </button>
       </article>
 
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <section className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-6">
         {[
           ['Current streak', `${streak.currentStreak} days`],
           ['Best streak', `${streak.longestStreak} days`],
@@ -203,7 +203,7 @@ export default function HabitDetail() {
         ))}
       </section>
 
-      <section className="grid lg:grid-cols-2 gap-6 mb-8">
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
         <article className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl p-5">
           <header className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold">Consistency calendar</h2>
@@ -275,9 +275,9 @@ export default function HabitDetail() {
       </section>
 
       <article className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl p-5">
-        <header className="flex items-center justify-between mb-4">
+        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <h2 className="text-sm font-semibold">My notes</h2>
-          <Button variant="outline" onClick={() => document.getElementById('habit-note-input')?.focus()}>
+          <Button variant="outline" className="w-full sm:w-auto min-h-[44px]" onClick={() => document.getElementById('habit-note-input')?.focus()}>
             New note
           </Button>
         </header>
@@ -290,16 +290,16 @@ export default function HabitDetail() {
             </li>
           ))}
         </ul>
-        <section className="flex gap-2">
+        <section className="flex flex-col sm:flex-row gap-2">
           <input
             id="habit-note-input"
-            className="flex-1 border border-[rgba(100,80,60,0.2)] rounded-lg px-3 py-2 text-sm bg-[#FAF8F5]"
+            className="flex-1 border border-[rgba(100,80,60,0.2)] rounded-lg px-3 py-2.5 text-sm bg-[#FAF8F5] min-h-[44px]"
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
             placeholder="Write a reflection…"
             onKeyDown={(e) => e.key === 'Enter' && addNote()}
           />
-          <Button onClick={addNote}>Add</Button>
+          <Button onClick={addNote} className="w-full sm:w-auto min-h-[44px]">Add</Button>
         </section>
       </article>
 

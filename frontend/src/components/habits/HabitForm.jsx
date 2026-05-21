@@ -55,11 +55,15 @@ export default function HabitForm({ open, onClose, onSave, initial }) {
 
   return (
     <section
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4 pb-nav-safe sm:pb-4"
       onClick={onClose}
       role="presentation"
     >
-      <form onSubmit={submit} onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl w-full max-w-md max-h-[90vh] flex flex-col">
+      <form
+        onSubmit={submit}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-t-2xl sm:rounded-xl w-full max-w-md max-h-[min(92dvh,calc(100dvh-1rem))] sm:max-h-[90vh] flex flex-col"
+      >
         <header className="flex justify-between items-center p-4 border-b sticky top-0 bg-white">
           <h2 className="font-semibold">{initial?._id ? 'Edit habit' : 'New habit'}</h2>
           <button type="button" onClick={onClose} className="text-[#9A8070]">✕</button>

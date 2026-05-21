@@ -109,7 +109,7 @@ export default function Landing() {
             <p className="text-xs uppercase tracking-[0.25em] text-[#9A8070] mb-4">
               Mindful habit tracking
             </p>
-            <h1 className="text-4xl md:text-5xl lg:text-[3.25rem] font-semibold leading-[1.12] tracking-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-semibold leading-[1.12] tracking-tight">
               Build habits that{' '}
               <em className="font-serif italic text-[#8C6E52] font-normal">actually</em> stick.
             </h1>

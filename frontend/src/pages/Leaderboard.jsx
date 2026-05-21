@@ -46,11 +46,11 @@ export default function Leaderboard() {
 
   return (
     <section className="min-h-screen bg-[#FAF8F5]">
-      <nav className="flex items-center justify-between px-6 py-4 border-b border-[rgba(100,80,60,0.12)] bg-[#FAF8F5]">
-        <Link to="/" className="font-semibold text-[#1C1917]">
+      <nav className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b border-[rgba(100,80,60,0.12)] bg-[#FAF8F5]">
+        <Link to="/" className="font-semibold text-[#1C1917] text-sm sm:text-base shrink-0">
           🌱 Habitly
         </Link>
-        <section className="flex gap-6 text-sm text-[#8C6E52]">
+        <section className="hidden sm:flex gap-4 md:gap-6 text-sm text-[#8C6E52]">
           <Link to="/leaderboard" className="text-[#1C1917] font-medium">
             Leaderboard
           </Link>
@@ -59,22 +59,22 @@ export default function Leaderboard() {
         {user ? (
           <Link
             to="/dashboard"
-            className="text-sm font-medium bg-[#1C1917] text-[#FAF8F5] px-4 py-2 rounded-lg"
+            className="text-xs sm:text-sm font-medium bg-[#1C1917] text-[#FAF8F5] px-3 sm:px-4 py-2 rounded-lg shrink-0 min-h-[40px] flex items-center"
           >
             Dashboard
           </Link>
         ) : (
           <Link
             to="/login"
-            className="text-sm font-medium bg-[#1C1917] text-[#FAF8F5] px-4 py-2 rounded-lg"
+            className="text-xs sm:text-sm font-medium bg-[#1C1917] text-[#FAF8F5] px-3 sm:px-4 py-2 rounded-lg shrink-0 min-h-[40px] flex items-center"
           >
             Get Started
           </Link>
         )}
       </nav>
 
-      <section className="grid lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px] gap-0 max-w-[1400px] mx-auto min-h-[calc(100vh-72px)]">
-        <section className="relative min-h-[500px] lg:min-h-[calc(100vh-72px)] p-4 lg:p-6">
+      <section className="flex flex-col lg:grid lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px] gap-0 max-w-[1400px] mx-auto min-h-0 lg:min-h-[calc(100dvh-72px)]">
+        <section className="relative min-h-[280px] sm:min-h-[360px] lg:min-h-[calc(100dvh-72px)] p-3 sm:p-4 lg:p-6 order-1">
           <LeaderboardConstellation
             ref={canvasRef}
             users={listRows}
@@ -83,9 +83,9 @@ export default function Leaderboard() {
           />
         </section>
 
-        <section className="bg-[#1C1917] text-[#FAF8F5] p-6 lg:p-8 flex flex-col border-l border-[#2a2624]">
-          <header className="mb-6">
-            <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight">Global Leaderboard</h1>
+        <section className="bg-[#1C1917] text-[#FAF8F5] p-4 sm:p-6 lg:p-8 flex flex-col border-t lg:border-t-0 lg:border-l border-[#2a2624] order-2 min-h-0 max-h-[55vh] lg:max-h-none">
+          <header className="mb-4 sm:mb-6">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight">Global Leaderboard</h1>
             <p className="text-sm text-[#9A8070] mt-2">Ranked by current streak across all dimensions.</p>
           </header>
 
@@ -138,11 +138,11 @@ export default function Leaderboard() {
                       canvasRef.current?.highlightUser(uid)
                     }}
                     onMouseLeave={() => setHoverKey(null)}
-                    className={`flex items-center gap-4 py-4 px-2 border-b border-[#2a2624] transition-colors ${
+                    className={`flex items-center gap-2 sm:gap-4 py-3 sm:py-4 px-2 border-b border-[#2a2624] transition-colors ${
                       hoverKey === uid ? 'bg-[#2a2624]/80' : ''
                     }`}
                   >
-                    <span className={`w-8 font-mono text-sm font-semibold ${medal}`}>
+                    <span className={`w-6 sm:w-8 font-mono text-xs sm:text-sm font-semibold shrink-0 ${medal}`}>
                       {String(i + 1).padStart(2, '0')}
                     </span>
                     <span

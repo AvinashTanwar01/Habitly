@@ -168,27 +168,33 @@ export default function Dashboard() {
     }
   }
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-[#9A8070] text-sm">Loading dashboard...</p>
-      </div>
+      <PageContent>
+        <div className="flex items-center justify-center h-48 sm:h-64">
+          <p className="text-[#9A8070] text-sm">Loading dashboard...</p>
+        </div>
+      </PageContent>
     )
+  }
 
-  if (error)
+  if (error) {
     return (
-      <p className="m-6 p-4 text-red-700 bg-red-50 border border-red-200 rounded-xl text-sm">
-        {error}
-      </p>
+      <PageContent>
+        <p className="p-4 text-red-700 bg-red-50 border border-red-200 rounded-xl text-sm">
+          {error}
+        </p>
+      </PageContent>
     )
+  }
 
   return (
     <PageContent>
 
       {/* ── HEADER ── */}
-      <header className="flex justify-between items-center mb-5">
+      <header className="mb-5">
         <div>
-          <h1 className="text-2xl font-semibold text-[#1C1917] tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-semibold text-[#1C1917] tracking-tight">
             {greeting()}, {user?.displayName?.split(' ')[0]}
           </h1>
           <p className="text-sm text-[#9A8070] mt-0.5">
@@ -201,20 +207,20 @@ export default function Dashboard() {
 
       {/* ── QUOTE ── */}
       <div
-        className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl px-5 py-4 mb-5 flex items-center gap-4"
+        className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl px-4 sm:px-5 py-4 mb-5 flex items-start sm:items-center gap-3"
         style={{ borderLeft: '3px solid #C4A882' }}
       >
         <p className="text-sm text-[#5a4a3a] italic flex-1">"{quote}"</p>
-        <span className="text-2xl text-[#C4A882] opacity-30 shrink-0">✦</span>
+        <span className="text-xl sm:text-2xl text-[#C4A882] opacity-30 shrink-0">✦</span>
       </div>
 
       {/* ── ROW 1: Today's Progress + Day Streak ── */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
 
         {/* Today's Progress */}
-        <div className="col-span-2 bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl p-6 flex items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold text-[#1C1917] mb-1">Today's Progress</h2>
+        <div className="md:col-span-2 bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center sm:items-center justify-between gap-4">
+          <div className="w-full sm:flex-1 text-center sm:text-left">
+            <h2 className="text-lg sm:text-xl font-semibold text-[#1C1917] mb-1">Today's Progress</h2>
             <p className="text-sm text-[#9A8070]">
               {total - done > 0
                 ? `${total - done} habits remaining to reach your goal`
@@ -227,22 +233,24 @@ export default function Dashboard() {
         </div>
 
         {/* Day Streak */}
-        <div className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl p-5 flex flex-col items-center justify-center gap-1">
-          <span className="text-4xl">🔥</span>
-          <p className="font-mono text-5xl font-semibold text-[#1C1917] mt-1 leading-none">
+        <div className="bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl p-5 flex flex-row sm:flex-col items-center justify-center gap-3 sm:gap-1">
+          <span className="text-3xl sm:text-4xl">🔥</span>
+          <div className="text-center sm:text-center">
+          <p className="font-mono text-4xl sm:text-5xl font-semibold text-[#1C1917] leading-none">
             {bestCurrent}
           </p>
           <p className="text-[10px] uppercase tracking-widest text-[#9A8070] mt-1">
             Day streak
           </p>
+          </div>
         </div>
       </div>
 
       {/* ── ROW 2: Habits list + Right panel ── */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
         {/* ── HABITS CARD (contains list + week dots + add button) ── */}
-        <div className="col-span-2 bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl overflow-hidden">
+        <div className="md:col-span-2 bg-white border border-[rgba(100,80,60,0.12)] rounded-2xl overflow-hidden">
 
           {/* Habits header */}
           <div className="flex items-center justify-between px-5 pt-5 pb-3">
@@ -269,7 +277,7 @@ export default function Dashboard() {
               {habits.map((h) => (
                 <div
                   key={h._id}
-                  className={`flex items-center gap-3 rounded-xl p-3.5 border transition-all ${
+                  className={`flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 rounded-xl p-3 sm:p-3.5 border transition-all ${
                     h.isDone
                       ? 'bg-[#FAF8F5] border-[rgba(100,80,60,0.08)]'
                       : 'bg-white border-[rgba(100,80,60,0.12)] hover:border-[rgba(100,80,60,0.22)]'
@@ -297,7 +305,7 @@ export default function Dashboard() {
                   </Link>
 
                   {/* Streak badge */}
-                  <span className="text-xs font-mono text-[#C4A882] shrink-0 hidden sm:block">
+                  <span className="text-xs font-mono text-[#C4A882] shrink-0 order-3 sm:order-none">
                     🔥 {h.currentStreak || 0}
                   </span>
 
@@ -346,7 +354,7 @@ export default function Dashboard() {
                 return (
                   <div key={i} className="flex flex-col items-center gap-1.5 flex-1">
                     <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all
+                      className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all
                         ${isDone
                           ? 'bg-[#1C1917] text-white'
                           : isToday

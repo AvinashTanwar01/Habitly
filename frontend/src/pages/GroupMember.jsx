@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { groupService } from '../services/groupService'
 import { taskService } from '../services/taskService'
 import { useAuth } from '../context/AuthContext'
+import PageContent from '../components/layout/PageContent'
 import Avatar from '../components/ui/Avatar'
 
 function daysLeft(deadline) {
@@ -23,7 +24,13 @@ export default function GroupMember() {
 
   useEffect(load, [id])
 
-  if (!group) return <p className="p-8 text-[#9A8070]">Loading...</p>
+  if (!group) {
+    return (
+      <PageContent>
+        <p className="text-[#9A8070]">Loading...</p>
+      </PageContent>
+    )
+  }
 
   const myTasks = tasks.filter(
     (t) => !t.assignedTo || String(t.assignedTo) === String(user?.id)
@@ -33,9 +40,9 @@ export default function GroupMember() {
   )
 
   return (
-    <section className="p-6 max-w-3xl">
+    <PageContent className="max-w-3xl">
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold">{group.name}</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold">{group.name}</h1>
         <p className="text-sm text-[#9A8070]">
           {group.role === 'leader' ? 'Leader' : 'Member'} · {group.memberCount}/15 members
           {group.leaderName && ` · Led by ${group.leaderName}`}
@@ -49,9 +56,10 @@ export default function GroupMember() {
           const left = daysLeft(t.deadline)
           const color = left <= 1 ? 'text-red-600' : left <= 3 ? 'text-amber-600' : 'text-green-700'
           return (
-            <li key={t._id} className="bg-white border rounded-xl p-4 flex gap-3 items-start">
+            <li key={t._id} className="bg-white border rounded-xl p-4 flex gap-3 items-start min-h-[44px]">
               <input
                 type="checkbox"
+                className="w-5 h-5 shrink-0 mt-0.5"
                 checked={t.isDone}
                 onChange={async () => { await taskService.complete(t._id); load() }}
               />
@@ -90,6 +98,6 @@ export default function GroupMember() {
           </span>
         ))}
       </section>
-    </section>
+    </PageContent>
   )
 }

@@ -13,7 +13,7 @@ const navClass = ({ isActive }) =>
   }`
 
 const mobileClass = ({ isActive }) =>
-  `flex flex-col items-center justify-center flex-1 py-2 text-[10px] gap-0.5 ${
+  `flex flex-col items-center justify-center flex-1 min-w-0 py-2 px-0.5 text-[9px] sm:text-[10px] gap-0.5 min-h-[52px] ${
     isActive ? 'text-[#C4A882]' : 'text-[#9A8070]'
   }`
 
@@ -104,22 +104,30 @@ export default function Navbar() {
         </Link>
       </aside>
 
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch justify-around bg-[#1C1917] text-[#FAF8F5] border-t border-[#2a2624] pb-[env(safe-area-inset-bottom,0px)]">
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 grid grid-cols-5 bg-[#1C1917] text-[#FAF8F5] border-t border-[#2a2624]"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        aria-label="Main navigation"
+      >
         <NavLink to="/dashboard" className={mobileClass}>
-          <i className="ti ti-layout-dashboard text-xl" />
-          Home
+          <i className="ti ti-layout-dashboard text-xl sm:text-2xl" />
+          <span>Home</span>
         </NavLink>
         <NavLink to="/habits" className={mobileClass}>
-          <i className="ti ti-checkbox text-xl" />
-          Habits
+          <i className="ti ti-checkbox text-xl sm:text-2xl" />
+          <span>Habits</span>
+        </NavLink>
+        <NavLink to="/stats" className={mobileClass}>
+          <i className="ti ti-chart-dots text-xl sm:text-2xl" />
+          <span>Stats</span>
         </NavLink>
         <NavLink to="/groups" className={mobileClass}>
-          <i className="ti ti-users text-xl" />
-          Groups
+          <i className="ti ti-users text-xl sm:text-2xl" />
+          <span>Groups</span>
         </NavLink>
-        <NavLink to="/settings" className={mobileClass}>
-          <i className="ti ti-settings text-xl" />
-          Settings
+        <NavLink to="/leaderboard" className={mobileClass}>
+          <i className="ti ti-stars text-xl sm:text-2xl" />
+          <span>Rank</span>
         </NavLink>
       </nav>
     </>

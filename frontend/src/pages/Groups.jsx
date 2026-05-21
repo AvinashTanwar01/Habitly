@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { groupService } from '../services/groupService'
+import PageContent from '../components/layout/PageContent'
 import Button from '../components/ui/Button'
 
 const DOTS = ['#C4A882', '#8C6E52', '#9A8070']
@@ -17,17 +18,19 @@ export default function Groups() {
   }, [])
 
   return (
-    <section className="p-6">
-      <header className="flex justify-between items-center mb-2">
-        <h1 className="text-2xl font-semibold">My Groups</h1>
-        <Button onClick={() => navigate('/groups/new')}>New Group</Button>
+    <PageContent>
+      <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2">
+        <h1 className="text-xl sm:text-2xl font-semibold">My Groups</h1>
+        <Button onClick={() => navigate('/groups/new')} className="w-full sm:w-auto min-h-[44px]">
+          New Group
+        </Button>
       </header>
       <p className="text-sm text-[#9A8070] mb-6">{usage.used} of {usage.limit} group creations used this month</p>
 
       {groups.length === 0 ? (
         <p className="text-center text-[#9A8070] py-12">No groups yet. Create one to track habits with friends or teammates.</p>
       ) : (
-        <section className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {groups.map((g, i) => (
             <Link
               key={g._id}
@@ -46,6 +49,6 @@ export default function Groups() {
           ))}
         </section>
       )}
-    </section>
+    </PageContent>
   )
 }

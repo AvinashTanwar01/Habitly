@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { groupService } from '../services/groupService'
 import { taskService } from '../services/taskService'
+import PageContent from '../components/layout/PageContent'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 
@@ -22,8 +23,8 @@ export default function GroupTaskNew() {
   }
 
   return (
-    <section className="p-6 flex justify-center">
-      <form onSubmit={submit} className="bg-white border rounded-xl p-8 w-full max-w-md space-y-4">
+    <PageContent className="flex justify-center">
+      <form onSubmit={submit} className="bg-white border rounded-xl p-5 sm:p-8 w-full max-w-md space-y-4">
         <button type="button" onClick={() => navigate(-1)} className="text-sm text-[#8C6E52]">← Back</button>
         <h1 className="text-xl font-semibold">Add task</h1>
         <Input label="Title" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} required />
@@ -35,6 +36,6 @@ export default function GroupTaskNew() {
         </select>
         <Button type="submit" className="w-full">Create task</Button>
       </form>
-    </section>
+    </PageContent>
   )
 }

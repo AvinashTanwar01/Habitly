@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import PageContent from '../components/layout/PageContent'
 import { habitService } from '../services/habitService'
 import { statsService } from '../services/statsService'
 import { getEffectiveToday } from '../utils/streakUtils'
@@ -116,21 +117,33 @@ export default function Habits() {
     load()
   }
 
-  if (loading) return <p className="p-8 text-[#9A8070]">Loading...</p>
-  if (error) return <p className="p-8 text-red-700 bg-red-50 border border-red-200 rounded-xl m-6">{error}</p>
+  if (loading) {
+    return (
+      <PageContent>
+        <p className="text-[#9A8070]">Loading...</p>
+      </PageContent>
+    )
+  }
+  if (error) {
+    return (
+      <PageContent>
+        <p className="text-red-700 bg-red-50 border border-red-200 rounded-xl p-4 text-sm">{error}</p>
+      </PageContent>
+    )
+  }
 
   return (
-    <section className="p-6">
-      <header className="flex justify-between items-start mb-6">
-        <section>
-          <p className="text-sm text-[#9A8070]">{new Date().toLocaleDateString()}</p>
-        </section>
+    <PageContent>
+      <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
+        <p className="text-sm text-[#9A8070]">{new Date().toLocaleDateString()}</p>
         {view === 'active' && (
-          <Button onClick={() => setModal({ open: true, habit: null })}>New habit</Button>
+          <Button onClick={() => setModal({ open: true, habit: null })} className="w-full sm:w-auto min-h-[44px]">
+            New habit
+          </Button>
         )}
       </header>
 
-      <nav className="flex gap-2 mb-6">
+      <nav className="flex flex-wrap gap-2 mb-6">
         <button
           type="button"
           onClick={() => setView('active')}
@@ -162,9 +175,9 @@ export default function Habits() {
               {archived.map((h) => (
                 <li
                   key={h._id}
-                  className="bg-white border border-[rgba(100,80,60,0.12)] rounded-xl p-4 flex items-center justify-between gap-4"
+                  className="bg-white border border-[rgba(100,80,60,0.12)] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4"
                 >
-                  <section className="flex items-center gap-3 min-w-0">
+                  <section className="flex items-center gap-3 min-w-0 w-full">
                     <span className="text-2xl shrink-0">{h.icon}</span>
                     <section className="min-w-0">
                       <p className="font-medium truncate">{h.name}</p>
@@ -174,7 +187,7 @@ export default function Habits() {
                       </p>
                     </section>
                   </section>
-                  <section className="flex gap-2 shrink-0">
+                  <section className="flex flex-wrap gap-2 shrink-0 w-full sm:w-auto">
                     <Button
                       variant="outline"
                       onClick={async () => {
@@ -208,7 +221,7 @@ export default function Habits() {
         </section>
       ) : (
         <>
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         <article className="bg-[#F2EDE6] rounded-xl p-3"><p className="text-xs text-[#9A8070]">Active</p><p className="font-mono text-xl">{habits.length}</p></article>
         <article className="bg-[#F2EDE6] rounded-xl p-3"><p className="text-xs text-[#9A8070]">Done today</p><p className="font-mono text-xl">{todayHabits.length}/{habits.length}</p></article>
         <article className="bg-[#F2EDE6] rounded-xl p-3"><p className="text-xs text-[#9A8070]">Best streak</p><p className="font-mono text-xl">🔥 {bestStreak}</p></article>
@@ -221,7 +234,7 @@ export default function Habits() {
             key={f}
             type="button"
             onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-full text-sm capitalize ${
+            className={`px-3 py-2 rounded-full text-sm capitalize min-h-[40px] ${
               filter === f ? 'bg-[#1C1917] text-white' : 'border border-[rgba(100,80,60,0.25)] text-[#8C6E52]'
             }`}
           >
@@ -236,7 +249,7 @@ export default function Habits() {
         groups.map((g) => (
           <section key={g.type} className="mb-8">
             <h2 className="text-sm uppercase text-[#9A8070] mb-3">{g.type}</h2>
-            <section className="grid md:grid-cols-2 gap-4">
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {g.items.map((h) => (
                 <HabitCard
                   key={h._id}
@@ -264,6 +277,6 @@ export default function Habits() {
       />
         </>
       )}
-    </section>
+    </PageContent>
   )
 }

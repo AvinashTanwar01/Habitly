@@ -32,61 +32,39 @@ export default function NotificationDropdown({ onClose }) {
 
   return (
     <div
-      style={{
-        position: 'absolute',
-        top: 40,
-        right: 0,
-        background: 'white',
-        border: '0.5px solid rgba(100,80,60,0.15)',
-        borderRadius: 12,
-        boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
-        width: 300,
-        zIndex: 100,
-        animation: 'fadeIn 150ms ease',
-      }}
+      className="fixed left-3 right-3 top-[calc(52px+env(safe-area-inset-top,0px)+0.5rem)] md:absolute md:left-auto md:right-0 md:top-10 md:w-[min(300px,calc(100vw-2rem))] z-[100] bg-white border border-[rgba(100,80,60,0.15)] rounded-xl shadow-lg animate-[fadeIn_150ms_ease] max-h-[min(70vh,420px)] flex flex-col"
     >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '12px 14px',
-          borderBottom: '0.5px solid rgba(100,80,60,0.1)',
-        }}
-      >
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#1C1917' }}>Notifications</span>
+      <div className="flex justify-between items-center px-3.5 py-3 border-b border-[rgba(100,80,60,0.1)] shrink-0">
+        <span className="text-[13px] font-semibold text-[#1C1917]">Notifications</span>
         <button
           type="button"
           onClick={onClose}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9A8070', fontSize: 16 }}
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-[#9A8070] hover:bg-[#F2EDE6]"
+          aria-label="Close notifications"
         >
           ×
         </button>
       </div>
-      <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+      <div className="overflow-y-auto flex-1 min-h-0">
         {loading ? (
-          <p style={{ textAlign: 'center', padding: 20, fontSize: 13, color: '#9A8070' }}>Loading...</p>
+          <p className="text-center py-5 text-[13px] text-[#9A8070]">Loading...</p>
         ) : notifications.length === 0 ? (
-          <p style={{ textAlign: 'center', padding: 24, fontSize: 13, color: '#9A8070' }}>No notifications yet</p>
+          <p className="text-center py-6 text-[13px] text-[#9A8070]">No notifications yet</p>
         ) : (
           notifications.map((n) => (
             <Link
               key={n._id}
               to={n.url || '/dashboard'}
               onClick={onClose}
-              style={{
-                display: 'block',
-                padding: '10px 14px',
-                borderBottom: '0.5px solid rgba(100,80,60,0.06)',
-                background: n.isRead ? 'transparent' : '#FAF8F5',
-                textDecoration: 'none',
-              }}
+              className={`block px-3.5 py-2.5 border-b border-[rgba(100,80,60,0.06)] last:border-0 ${
+                n.isRead ? 'bg-transparent' : 'bg-[#FAF8F5]'
+              }`}
             >
-              <p style={{ fontSize: 13, fontWeight: 500, color: '#1C1917', margin: '0 0 2px' }}>{n.title}</p>
+              <p className="text-[13px] font-medium text-[#1C1917] mb-0.5">{n.title}</p>
               {n.body ? (
-                <p style={{ fontSize: 12, color: '#9A8070', margin: 0 }}>{n.body}</p>
+                <p className="text-xs text-[#9A8070]">{n.body}</p>
               ) : null}
-              <p style={{ fontSize: 11, color: '#C4A882', margin: '3px 0 0' }}>
+              <p className="text-[11px] text-[#C4A882] mt-1">
                 {new Date(n.createdAt).toLocaleDateString('en-US', {
                   month: 'short',
                   day: 'numeric',

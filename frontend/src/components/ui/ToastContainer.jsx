@@ -19,7 +19,7 @@ export default function ToastContainer() {
 
   return (
     <section
-      className="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-sm w-[calc(100%-2rem)] pointer-events-none"
+      className="fixed z-[100] flex flex-col gap-2 max-w-sm w-[calc(100%-1.5rem)] pointer-events-none left-3 right-3 sm:left-auto sm:right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:bottom-auto md:top-4"
       aria-live="polite"
     >
       {toasts.map((t) => (
@@ -34,7 +34,7 @@ export default function ToastContainer() {
           <button
             type="button"
             onClick={() => dismiss(t.id)}
-            className="text-[#9A8070] hover:text-white shrink-0 text-lg leading-none"
+            className="text-[#9A8070] hover:text-white shrink-0 text-lg leading-none min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2"
             aria-label="Dismiss"
           >
             ×

@@ -5,6 +5,7 @@ import { authService } from '../services/authService'
 import { habitService } from '../services/habitService'
 import { notificationService } from '../services/notificationService'
 import { useToast } from '../context/ToastContext'
+import PageContent from '../components/layout/PageContent'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Avatar from '../components/ui/Avatar'
@@ -242,20 +243,24 @@ export default function Settings() {
   ]
 
   if (!user) {
-    return <p className="p-8 text-[#9A8070]">Loading account...</p>
+    return (
+      <PageContent>
+        <p className="text-[#9A8070]">Loading account...</p>
+      </PageContent>
+    )
   }
 
   return (
-    <section className="p-6 lg:p-8 w-full min-h-full">
+    <PageContent>
       {pageLoading && <p className="text-sm text-[#9A8070] mb-4">Loading settings...</p>}
 
-      <nav className="flex gap-2 mb-6 border-b border-[rgba(100,80,60,0.12)] pb-2">
+      <nav className="flex flex-wrap gap-2 mb-6 border-b border-[rgba(100,80,60,0.12)] pb-2 -mx-1">
         {TABS.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => { setTab(t.id); setError('') }}
-            className={`px-3 py-1.5 rounded-lg text-sm ${
+            className={`px-3 py-2.5 rounded-lg text-sm min-h-[44px] ${
               tab === t.id ? 'bg-[#1C1917] text-white' : 'text-[#8C6E52] hover:bg-[#F2EDE6]'
             }`}
           >
@@ -272,69 +277,35 @@ export default function Settings() {
           <article className="bg-white border rounded-2xl p-5 space-y-4">
             <h2 className="font-medium flex items-center gap-2"><i className="ti ti-user" /> Account</h2>
 
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 16,
-                padding: '20px 0',
-                borderBottom: '0.5px solid rgba(100,80,60,0.1)',
-                marginBottom: 20,
-              }}
-            >
-              <div style={{ position: 'relative' }}>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 py-5 border-b border-[rgba(100,80,60,0.1)] mb-5">
+              <div className="relative shrink-0 self-start">
                 <Avatar user={user} size={72} onClick={handleAvatarClick} style={{ cursor: 'pointer' }} />
-                <div
-                  role="button"
-                  tabIndex={0}
+                <button
+                  type="button"
                   onClick={handleAvatarClick}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAvatarClick()}
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    right: 0,
-                    width: 22,
-                    height: 22,
-                    borderRadius: '50%',
-                    background: '#1C1917',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    border: '2px solid #FAF8F5',
-                    fontSize: 11,
-                    color: 'white',
-                  }}
+                  className="absolute bottom-0 right-0 w-[22px] h-[22px] rounded-full bg-[#1C1917] text-white text-[11px] flex items-center justify-center border-2 border-[#FAF8F5]"
+                  aria-label="Change photo"
                 >
                   ✏️
-                </div>
+                </button>
               </div>
-              <div>
-                <p style={{ fontSize: 15, fontWeight: 600, color: '#1C1917', marginBottom: 2 }}>
+              <div className="min-w-0">
+                <p className="text-[15px] font-semibold text-[#1C1917] mb-0.5 truncate">
                   {user?.displayName}
                 </p>
-                <p style={{ fontSize: 13, color: '#9A8070', marginBottom: 8 }}>{user?.email}</p>
+                <p className="text-[13px] text-[#9A8070] mb-2 truncate">{user?.email}</p>
                 <button
                   type="button"
                   onClick={handleAvatarClick}
                   disabled={uploading}
-                  style={{
-                    fontSize: 12,
-                    color: '#8C6E52',
-                    background: '#F2EDE6',
-                    border: '0.5px solid rgba(100,80,60,0.2)',
-                    borderRadius: 6,
-                    padding: '5px 12px',
-                    cursor: uploading ? 'not-allowed' : 'pointer',
-                    opacity: uploading ? 0.7 : 1,
-                  }}
+                  className="text-xs text-[#8C6E52] bg-[#F2EDE6] border border-[rgba(100,80,60,0.2)] rounded-md px-3 py-2 min-h-[44px] disabled:opacity-70"
                 >
                   {uploading ? 'Uploading...' : 'Change photo'}
                 </button>
                 {uploadError && (
-                  <p style={{ fontSize: 11, color: '#DC2626', marginTop: 4 }}>{uploadError}</p>
+                  <p className="text-[11px] text-red-600 mt-1">{uploadError}</p>
                 )}
-                <p style={{ fontSize: 11, color: '#9A8070', marginTop: 4 }}>
+                <p className="text-[11px] text-[#9A8070] mt-2">
                   JPG, PNG or WebP · Max 5MB · Stored in Cloudinary
                 </p>
               </div>
@@ -347,9 +318,9 @@ export default function Settings() {
               />
             </div>
 
-            <section className="flex gap-2">
+            <section className="flex flex-col sm:flex-row gap-2">
               <Input label="Display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="flex-1" />
-              <Button onClick={() => saveProfile()} className="self-end">Save</Button>
+              <Button onClick={() => saveProfile()} className="sm:self-end w-full sm:w-auto min-h-[44px]">Save</Button>
             </section>
             <Input label="Email" value={user?.email || ''} disabled />
             <button type="button" onClick={() => setPwdOpen(!pwdOpen)} className="text-sm text-[#8C6E52] underline">
@@ -368,9 +339,9 @@ export default function Settings() {
           <article className="bg-white border rounded-2xl p-5">
             <h2 className="font-medium flex items-center gap-2 mb-2"><i className="ti ti-clock" /> Daily reset time</h2>
             <p className="text-sm text-[#9A8070] mb-3">Your habit list resets at this time every day.</p>
-            <section className="flex gap-2">
+            <section className="flex flex-col sm:flex-row gap-2">
               <Input type="time" value={resetTime} onChange={(e) => setResetTime(e.target.value)} className="flex-1" />
-              <Button onClick={saveReset}>Save</Button>
+              <Button onClick={saveReset} className="w-full sm:w-auto min-h-[44px]">Save</Button>
             </section>
           </article>
 
@@ -504,8 +475,8 @@ export default function Settings() {
       )}
 
       {archiveOpen && (
-        <section className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <section className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+        <section className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center p-4 z-50 pb-nav-safe sm:pb-4">
+          <section className="bg-white rounded-2xl rounded-b-none sm:rounded-b-2xl p-6 max-w-sm w-full shadow-xl max-h-[90vh] overflow-y-auto">
             <p className="mb-4 text-[#1C1917]">Archive all habits? They will disappear from your active list but stay in the archive.</p>
             <section className="flex gap-2">
               <Button variant="outline" className="flex-1" type="button" onClick={() => setArchiveOpen(false)}>Cancel</Button>
@@ -516,8 +487,8 @@ export default function Settings() {
       )}
 
       {deleteOpen && (
-        <section className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <section className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+        <section className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center p-4 z-50 pb-nav-safe sm:pb-4">
+          <section className="bg-white rounded-2xl rounded-b-none sm:rounded-b-2xl p-6 max-w-sm w-full shadow-xl max-h-[90vh] overflow-y-auto">
             <p className="mb-2 text-[#1C1917] font-medium">Delete your account and all data permanently?</p>
             <p className="text-sm text-[#9A8070] mb-3">Type DELETE to confirm.</p>
             <Input value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} placeholder="DELETE" className="mb-4" />
@@ -535,6 +506,6 @@ export default function Settings() {
           </section>
         </section>
       )}
-    </section>
+    </PageContent>
   )
 }

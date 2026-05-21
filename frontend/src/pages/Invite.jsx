@@ -61,8 +61,8 @@ export default function Invite() {
   const fullMessage = isFull ? 'This group is full' : error && /full/i.test(error) ? error : null
 
   return (
-    <section className="min-h-screen flex items-center justify-center bg-[#FAF8F5] p-4">
-      <article className="bg-white border rounded-xl p-8 max-w-md w-full text-center shadow-sm">
+    <section className="min-h-dvh flex items-center justify-center bg-[#FAF8F5] p-4 overflow-x-hidden">
+      <article className="bg-white border rounded-xl p-6 sm:p-8 max-w-md w-full text-center shadow-sm">
         <h1 className="text-xl font-semibold mb-2">{name}</h1>
         <p className="text-sm text-[#9A8070] mb-6">
           Led by {preview.leaderName} · {preview.memberCount} members

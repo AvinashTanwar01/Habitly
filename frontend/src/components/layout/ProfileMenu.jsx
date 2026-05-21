@@ -16,7 +16,11 @@ export default function ProfileMenu() {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false)
     }
     document.addEventListener('mousedown', onDoc)
-    return () => document.removeEventListener('mousedown', onDoc)
+    document.addEventListener('touchstart', onDoc)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('touchstart', onDoc)
+    }
   }, [open])
 
   const handleLogout = async () => {
@@ -31,60 +35,44 @@ export default function ProfileMenu() {
   }
 
   return (
-    <div className="relative" ref={ref} style={{ position: 'relative' }}>
-      <Avatar user={user} size={34} onClick={() => setOpen((o) => !o)} />
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="rounded-full"
+        aria-label="Account menu"
+        aria-expanded={open}
+      >
+        <Avatar user={user} size={34} />
+      </button>
+
       {open && (
         <div
-          style={{
-            position: 'absolute',
-            top: 40,
-            right: 0,
-            background: 'white',
-            border: '0.5px solid rgba(100,80,60,0.15)',
-            borderRadius: 10,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-            minWidth: 180,
-            zIndex: 100,
-            animation: 'fadeIn 150ms ease',
-            padding: '8px 0',
-          }}
+          className="absolute right-0 z-[100] min-w-[200px] max-w-[min(280px,calc(100vw-2rem))] bg-white border border-[rgba(100,80,60,0.15)] rounded-xl shadow-lg py-2 animate-[fadeIn_0.15s_ease-out] md:top-10 md:bottom-auto bottom-11"
         >
-          <div style={{ padding: '8px 14px 10px', borderBottom: '0.5px solid rgba(100,80,60,0.1)' }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#1C1917', margin: 0 }}>{user?.displayName}</p>
-            <p style={{ fontSize: 11, color: '#9A8070', margin: '2px 0 0' }}>{user?.email}</p>
+          <div className="px-3.5 py-2.5 border-b border-[rgba(100,80,60,0.1)]">
+            <p className="text-sm font-semibold text-[#1C1917] truncate">{user?.displayName}</p>
+            <p className="text-xs text-[#9A8070] truncate">{user?.email}</p>
           </div>
           <Link
             to="/settings"
             onClick={() => setOpen(false)}
-            style={{
-              display: 'block',
-              padding: '9px 14px',
-              fontSize: 13,
-              color: '#1C1917',
-              textDecoration: 'none',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#FAF8F5' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+            className="block px-3.5 py-2.5 text-sm text-[#1C1917] hover:bg-[#FAF8F5] active:bg-[#F2EDE6]"
           >
             Settings
+          </Link>
+          <Link
+            to="/leaderboard"
+            onClick={() => setOpen(false)}
+            className="block px-3.5 py-2.5 text-sm text-[#1C1917] hover:bg-[#FAF8F5] active:bg-[#F2EDE6] md:hidden"
+          >
+            Leaderboard
           </Link>
           <button
             type="button"
             onClick={handleLogout}
             disabled={loggingOut}
-            style={{
-              display: 'block',
-              width: '100%',
-              textAlign: 'left',
-              padding: '9px 14px',
-              fontSize: 13,
-              color: '#DC2626',
-              background: 'none',
-              border: 'none',
-              cursor: loggingOut ? 'not-allowed' : 'pointer',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#FEF2F2' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+            className="w-full text-left px-3.5 py-2.5 text-sm text-[#DC2626] hover:bg-[#FEF2F2] active:bg-[#FEF2F2] disabled:opacity-60"
           >
             {loggingOut ? 'Logging out…' : 'Log out'}
           </button>

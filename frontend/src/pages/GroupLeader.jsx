@@ -157,7 +157,13 @@ export default function GroupLeader() {
     }
   }
 
-  if (!group) return <p className="p-8 text-[#9A8070]">Loading...</p>
+  if (!group) {
+    return (
+      <PageContent>
+        <p className="text-[#9A8070]">Loading...</p>
+      </PageContent>
+    )
+  }
 
   const uid = String(user?.id || user?._id || '')
 
@@ -171,7 +177,9 @@ export default function GroupLeader() {
             {' · '}{group.memberCount}/15 members
           </p>
         </section>
-        <Button onClick={() => setInviteOpen(true)}>Invite members</Button>
+        <Button onClick={() => setInviteOpen(true)} className="w-full sm:w-auto min-h-[44px]">
+          Invite members
+        </Button>
       </header>
 
       {msg && <p className="text-sm bg-[#F2EDE6] p-2 rounded mb-4">{msg}</p>}
@@ -291,8 +299,8 @@ export default function GroupLeader() {
       </article>
 
       {deleteOpen && (
-        <section className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <section className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+        <section className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center p-4 z-50 pb-nav-safe sm:pb-4">
+          <section className="bg-white rounded-2xl rounded-b-none sm:rounded-b-2xl p-6 max-w-sm w-full shadow-xl max-h-[90vh] overflow-y-auto">
             <h3 className="font-semibold text-[#1C1917] mb-2">Delete group?</h3>
             <p className="text-sm text-[#9A8070] mb-3">
               Type <strong>{group.name}</strong> below to confirm.
@@ -327,8 +335,8 @@ export default function GroupLeader() {
       )}
 
       {inviteOpen && (
-        <section className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <section className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <section className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center p-4 z-50 pb-nav-safe sm:pb-4">
+          <section className="bg-white rounded-t-2xl sm:rounded-xl p-6 w-full max-w-md max-h-[min(90dvh,calc(100dvh-2rem))] overflow-y-auto">
             <nav className="flex gap-2 mb-4">
               {['username', 'email'].map((t) => (
                 <button
@@ -343,16 +351,16 @@ export default function GroupLeader() {
             </nav>
             {tab === 'username' ? (
               <section>
-                <section className="flex gap-2 mb-3">
-                  <Input value={searchQ} onChange={(e) => setSearchQ(e.target.value)} placeholder="Search display name" />
-                  <Button type="button" onClick={searchUsers}>Search</Button>
+                <section className="flex flex-col sm:flex-row gap-2 mb-3">
+                  <Input value={searchQ} onChange={(e) => setSearchQ(e.target.value)} placeholder="Search display name" className="flex-1" />
+                  <Button type="button" onClick={searchUsers} className="w-full sm:w-auto min-h-[44px]">Search</Button>
                 </section>
                 {searchResults.map((u) => {
                   const inGroup = group.members?.some((m) => String(m.id) === String(u.id))
                   const invited = invitedUsernames.has(u.id) || inGroup
                   return (
-                    <section key={u.id} className="flex justify-between items-center p-2 border rounded mb-2">
-                      <span>{u.displayName}</span>
+                    <section key={u.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 border rounded mb-2">
+                      <span className="truncate">{u.displayName}</span>
                       <Button
                         type="button"
                         disabled={invited}
@@ -398,7 +406,7 @@ export default function GroupLeader() {
       )}
 
       {taskOpen && (
-        <section className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+        <section className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center p-4 z-50 pb-nav-safe sm:pb-4">
           <form onSubmit={saveTask} className="bg-white rounded-xl p-6 w-full max-w-md space-y-3">
             <Input label="Title" value={taskForm.title} onChange={(e) => setTaskForm((p) => ({ ...p, title: e.target.value }))} required />
             <textarea

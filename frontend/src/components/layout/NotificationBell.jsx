@@ -51,39 +51,17 @@ export default function NotificationBell() {
   }
 
   return (
-    <div className="relative" ref={panelRef} style={{ position: 'relative' }}>
+    <div className="relative" ref={panelRef}>
       <button
         type="button"
         onClick={handleToggle}
-        style={{
-          width: 34,
-          height: 34,
-          borderRadius: '50%',
-          background: '#F2EDE6',
-          border: '0.5px solid rgba(100,80,60,0.15)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          fontSize: 15,
-          color: '#8C6E52',
-        }}
+        className="relative w-9 h-9 sm:w-[34px] sm:h-[34px] rounded-full bg-[#F2EDE6] border border-[rgba(100,80,60,0.15)] flex items-center justify-center text-[#8C6E52] text-[15px]"
         aria-label="Notifications"
+        aria-expanded={open}
       >
         <i className="ti ti-bell" />
         {unread > 0 && (
-          <span
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              background: '#EF4444',
-              border: '1.5px solid #FAF8F5',
-            }}
-          />
+          <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-500 border-[1.5px] border-[#FAF8F5]" />
         )}
       </button>
       {open && (

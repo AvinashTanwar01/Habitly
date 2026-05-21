@@ -43,9 +43,9 @@ export default function HabitCard({ habit, onEdit, onArchive, onDelete }) {
             <section className="flex justify-between text-xs mb-1"><span>Progress</span><span>{rate}%</span></section>
             <section className="h-1.5 bg-[#EDE5DB] rounded-full"><section className="h-full bg-[#8C6E52] rounded-full" style={{ width: `${rate}%` }} /></section>
           </section>
-          <footer className="flex justify-between text-xs text-[#9A8070]">
+          <footer className="flex flex-col sm:flex-row sm:justify-between gap-1 text-xs text-[#9A8070]">
             <span><i className="ti ti-bell" /> {habit.reminderTime} · {habit.scheduleType}</span>
-            <span>Since {new Date(habit.createdAt).toLocaleDateString()}</span>
+            <span className="shrink-0">Since {new Date(habit.createdAt).toLocaleDateString()}</span>
           </footer>
         </section>
       </section>

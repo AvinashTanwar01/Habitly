@@ -173,8 +173,8 @@ export default function ConstellationMap({ habits = [] }) {
   return (
     <canvas
       ref={canvasRef}
-      className="w-full rounded-xl cursor-crosshair"
-      style={{ width: '100%', height: '320px', display: 'block' }}
+      className="w-full rounded-xl cursor-crosshair h-[220px] sm:h-[280px] md:h-[320px]"
+      style={{ width: '100%', display: 'block' }}
     />
   )
 }
