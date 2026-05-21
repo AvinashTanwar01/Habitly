@@ -1,0 +1,35 @@
+{
+  "name": "habit-tracker-backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "predev": "lsof -ti :5000 | xargs kill -9 2>/dev/null; true",
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "build": "echo 'No build step required'"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.41.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.0",
+    "google-auth-library": "^9.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^8.0.0",
+    "multer": "^2.1.1",
+    "multer-storage-cloudinary": "^4.0.0",
+    "nanoid": "^3.3.7",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "web-push": "^3.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}

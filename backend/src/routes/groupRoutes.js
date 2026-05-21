@@ -1,0 +1,20 @@
+const router = require('express').Router()
+const group = require('../controllers/groupController')
+const protect = require('../middleware/authMiddleware')
+
+router.get('/invite/:code', group.getInvitePreview)
+router.use(protect)
+router.get('/usage', group.getUsage)
+router.get('/', group.getAll)
+router.post('/', group.create)
+router.post('/join/:code', group.joinByCode)
+router.get('/:id', group.getOne)
+router.post('/:id/invite/username', group.inviteByUsername)
+router.post('/:id/invite/email', group.inviteByEmail)
+router.delete('/:id/leave', group.leave)
+router.delete('/:id', group.deleteGroup)
+router.post('/:id/notes', group.createNote)
+router.put('/:id/notes/:noteId', group.updateNote)
+router.delete('/:id/notes/:noteId', group.deleteNote)
+
+module.exports = router

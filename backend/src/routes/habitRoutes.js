@@ -1,0 +1,20 @@
+const router = require('express').Router()
+const habit = require('../controllers/habitController')
+const protect = require('../middleware/authMiddleware')
+
+router.use(protect)
+router.get('/today', habit.getToday)
+router.put('/archive-all', habit.archiveAll)
+router.get('/archived', habit.getArchived)
+router.get('/', habit.getAll)
+router.post('/', habit.create)
+router.get('/:id/completions', habit.getCompletions)
+router.get('/:id', habit.getOne)
+router.put('/:id/archive', habit.archive)
+router.put('/:id/unarchive', habit.unarchive)
+router.put('/:id', habit.update)
+router.delete('/:id', habit.delete)
+router.post('/:id/complete', habit.complete)
+router.post('/:id/uncomplete', habit.uncomplete)
+
+module.exports = router
