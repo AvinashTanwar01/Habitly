@@ -12,6 +12,7 @@ const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
 const { sendEmail } = require('../utils/emailUtils')
 const { verifyGoogleIdToken } = require('../utils/googleAuthUtils')
+const { clearLeaderboardCache } = require('./leaderboardController')
 
 const signToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN })
 
@@ -119,6 +120,8 @@ exports.linkGoogle = async (req, res) => {
     if (!user.displayName?.trim() && name) user.displayName = name
     await user.save()
 
+    clearLeaderboardCache()
+
     res.json({ user: userPayload(user) })
   } catch (err) {
     console.error('Link Google error:', err.message)
@@ -162,6 +165,9 @@ exports.uploadAvatar = async (req, res) => {
       { new: true },
     ).select('-password')
     if (!user) return res.status(404).json({ message: 'User not found' })
+
+    clearLeaderboardCache()
+
     res.json({ user: userPayload(user), profileImage: imageUrl })
   } catch (err) {
     console.error('Avatar upload error:', err)
@@ -181,6 +187,9 @@ exports.updateProfile = exports.updateMe = async (req, res) => {
     }
     const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true }).select('-password')
     if (!user) return res.status(404).json({ message: 'User not found' })
+
+    clearLeaderboardCache()
+
     res.json({ user: userPayload(user) })
   } catch (err) {
     console.error('updateProfile error:', err.message)

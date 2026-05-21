@@ -7,6 +7,12 @@ let leaderboardCache = { data: null, expires: 0 }
 let landingStatsCache = { data: null, expires: 0 }
 let leaderboardPromise = null
 
+exports.clearLeaderboardCache = () => {
+  leaderboardCache = { data: null, expires: 0 }
+  landingStatsCache = { data: null, expires: 0 }
+}
+
+
 async function getCachedLeaderboard() {
   if (leaderboardCache.data?.length && Date.now() < leaderboardCache.expires) {
     return leaderboardCache.data
