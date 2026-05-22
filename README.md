@@ -88,44 +88,6 @@ Habitly is a full-stack habit tracking web app with streaks, a public constellat
 
 ---
 
-## Project Structure
-
-```
-habitly/
-├── frontend/                  # React + Vite app
-│   ├── src/
-│   │   ├── pages/             # 15 pages (Dashboard, Habits, Stats, etc.)
-│   │   ├── components/        # Reusable UI + layout components
-│   │   │   ├── charts/        # Constellation canvases, progress ring
-│   │   │   ├── groups/        # Group cards, task cards, member cards
-│   │   │   ├── habits/        # Habit card, habit form
-│   │   │   ├── layout/        # Navbar, AppHeader, PageContent
-│   │   │   └── ui/            # Avatar, Button, Input, Toast
-│   │   ├── context/           # AuthContext, ToastContext
-│   │   ├── hooks/             # useHabits, useHabitReminders, usePageTitle
-│   │   ├── services/          # API service layer (habit, auth, stats, group, task)
-│   │   └── utils/             # streakUtils, dateUtils, constellationCanvas
-│   ├── public/
-│   │   └── sw.js              # Service worker for push notifications
-│   └── vercel.json            # Vercel SPA routing config
-│
-├── backend/                   # Node.js + Express API
-│   ├── src/
-│   │   ├── config/            # MongoDB + Cloudinary config
-│   │   ├── controllers/       # Auth, habits, groups, tasks, leaderboard
-│   │   ├── middleware/        # Auth guard, error handler, DB check
-│   │   ├── models/            # 9 Mongoose models
-│   │   ├── routes/            # All API routes
-│   │   └── utils/             # streakUtils, scheduler, emailUtils, pushUtils
-│   └── server.js
-│
-├── .gitignore
-├── README.md
-└── DEPLOY.md
-```
-
----
-
 ## Local Development
 
 ### Prerequisites
