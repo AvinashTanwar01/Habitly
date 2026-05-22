@@ -1,12 +1,12 @@
 const express = require('express')
 const cors = require('cors')
+const rateLimit = require('express-rate-limit')
 const { connectDB } = require('./config/db')
 const { errorHandler } = require('./middleware/errorMiddleware')
 const { requireDb } = require('./middleware/dbMiddleware')
 
 const app = express()
 
-// /ping and /health — no DB required
 app.get('/ping', (req, res) => res.send('pong'))
 app.get('/health', (req, res) => {
   res.json({
@@ -18,7 +18,6 @@ app.get('/health', (req, res) => {
 
 connectDB()
 
-// VAPID — initialize once at startup (required for web-push send)
 try {
   const webpush = require('web-push')
   const pub = (process.env.VAPID_PUBLIC_KEY || '').trim()
@@ -31,7 +30,7 @@ try {
     )
     console.warn('[push] VAPID configured for browser notifications')
   } else {
-    console.warn('[push] VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY missing — push delivery disabled (subscribe route still works)')
+    console.warn('[push] VAPID keys missing — push delivery disabled')
   }
 } catch (e) {
   console.error('[push] web-push init failed:', e.message)
@@ -57,32 +56,39 @@ app.use(cors({
 }))
 app.use(express.json({ limit: '1mb' }))
 
-// Notifications — required; fail loudly at startup if broken
+// Rate limiting — auth only, skipped in development
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { message: 'Too many attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV !== 'production',
+})
+
 const notificationRoutes = require('./routes/notificationRoutes')
 
 let authRoutes, habitRoutes, trackingRoutes, leaderboardRoutes, groupRoutes, taskRoutes, userRoutes
-try { authRoutes         = require('./routes/authRoutes')         } catch (e) { console.error('authRoutes failed to load:', e.message) }
-try { habitRoutes        = require('./routes/habitRoutes')        } catch (e) { console.error('habitRoutes failed to load:', e.message) }
-try { trackingRoutes     = require('./routes/trackingRoutes')     } catch (e) { console.error('trackingRoutes failed to load:', e.message) }
-try { leaderboardRoutes  = require('./routes/leaderboardRoutes')  } catch (e) { console.error('leaderboardRoutes failed to load:', e.message) }
-try { groupRoutes        = require('./routes/groupRoutes')        } catch (e) { console.error('groupRoutes failed to load:', e.message) }
-try { taskRoutes         = require('./routes/taskRoutes')         } catch (e) { console.error('taskRoutes failed to load:', e.message) }
-try { userRoutes         = require('./routes/userRoutes')         } catch (e) { console.error('userRoutes failed to load:', e.message) }
+try { authRoutes        = require('./routes/authRoutes')        } catch (e) { console.error('authRoutes failed:', e.message) }
+try { habitRoutes       = require('./routes/habitRoutes')       } catch (e) { console.error('habitRoutes failed:', e.message) }
+try { trackingRoutes    = require('./routes/trackingRoutes')    } catch (e) { console.error('trackingRoutes failed:', e.message) }
+try { leaderboardRoutes = require('./routes/leaderboardRoutes') } catch (e) { console.error('leaderboardRoutes failed:', e.message) }
+try { groupRoutes       = require('./routes/groupRoutes')       } catch (e) { console.error('groupRoutes failed:', e.message) }
+try { taskRoutes        = require('./routes/taskRoutes')        } catch (e) { console.error('taskRoutes failed:', e.message) }
+try { userRoutes        = require('./routes/userRoutes')        } catch (e) { console.error('userRoutes failed:', e.message) }
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }))
-
-// DB-dependent routes — fail fast if MongoDB is down
 app.use('/api', requireDb)
-
 app.use('/api/notifications', notificationRoutes)
 
-if (authRoutes)         app.use('/api/auth',          authRoutes)
-if (habitRoutes)        app.use('/api/habits',         habitRoutes)
-if (trackingRoutes)     app.use('/api/tracking',       trackingRoutes)
-if (leaderboardRoutes)  app.use('/api/stats',          leaderboardRoutes)
-if (groupRoutes)        app.use('/api/groups',         groupRoutes)
-if (taskRoutes)         app.use('/api/tasks',          taskRoutes)
-if (userRoutes)         app.use('/api/users',          userRoutes)
+// Apply rate limiter to auth routes in production
+if (authRoutes) app.use('/api/auth', authLimiter, authRoutes)
+if (habitRoutes)        app.use('/api/habits',   habitRoutes)
+if (trackingRoutes)     app.use('/api/tracking', trackingRoutes)
+if (leaderboardRoutes)  app.use('/api/stats',    leaderboardRoutes)
+if (groupRoutes)        app.use('/api/groups',   groupRoutes)
+if (taskRoutes)         app.use('/api/tasks',    taskRoutes)
+if (userRoutes)         app.use('/api/users',    userRoutes)
 
 app.use(errorHandler)
 

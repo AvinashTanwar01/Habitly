@@ -139,9 +139,34 @@ exports.getToday = async (req, res) => {
   }
 }
 
+// exports.create = async (req, res) => {
+//   try {
+//     const habit = await Habit.create({ ...withNormalizedReminder(req.body), userId: req.user._id })
+//     res.status(201).json(habit)
+//   } catch (e) {
+//     res.status(500).json({ message: e.message })
+//   }
+// }
 exports.create = async (req, res) => {
   try {
-    const habit = await Habit.create({ ...withNormalizedReminder(req.body), userId: req.user._id })
+    const { name, type } = req.body
+
+    // Validation
+    if (!name || name.trim().length < 1) {
+      return res.status(400).json({ message: 'Habit name is required' })
+    }
+    if (name.trim().length > 100) {
+      return res.status(400).json({ message: 'Habit name must be under 100 characters' })
+    }
+    if (!type || !['time', 'count', 'yesno'].includes(type)) {
+      return res.status(400).json({ message: 'Habit type must be time, count, or yesno' })
+    }
+
+    const habit = await Habit.create({
+      ...withNormalizedReminder(req.body),
+      name: name.trim(),
+      userId: req.user._id,
+    })
     res.status(201).json(habit)
   } catch (e) {
     res.status(500).json({ message: e.message })

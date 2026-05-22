@@ -24,6 +24,7 @@ import GroupLeader from './pages/GroupLeader'
 import GroupTaskNew from './pages/GroupTaskNew'
 import Invite from './pages/Invite'
 import { useHabitReminders } from './hooks/useHabitReminders'
+import NotFound from './pages/NotFound'
 
 function AppLayout() {
   useHabitReminders()
@@ -91,7 +92,7 @@ export default function App() {
             </Route>
           </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

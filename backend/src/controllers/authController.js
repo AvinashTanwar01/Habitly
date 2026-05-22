@@ -28,13 +28,52 @@ function userPayload(user) {
   }
 }
 
+// exports.signup = async (req, res) => {
+//   try {
+//     const { displayName, email, password } = req.body
+//     if (await User.findOne({ email })) return res.status(400).json({ message: 'Email already in use' })
+//     const user = await User.create({
+//       displayName,
+//       email,
+//       password: await bcrypt.hash(password, 12),
+//     })
+//     res.status(201).json({
+//       token: signToken(user._id),
+//       user: userPayload(user),
+//     })
+//   } catch (err) {
+//     console.error('Signup error:', err)
+//     res.status(500).json({ message: err.message })
+//   }
+// }
 exports.signup = async (req, res) => {
   try {
     const { displayName, email, password } = req.body
-    if (await User.findOne({ email })) return res.status(400).json({ message: 'Email already in use' })
+
+    // Validation
+    if (!displayName || displayName.trim().length < 2) {
+      return res.status(400).json({ message: 'Display name must be at least 2 characters' })
+    }
+    if (displayName.trim().length > 50) {
+      return res.status(400).json({ message: 'Display name must be under 50 characters' })
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ message: 'Please enter a valid email address' })
+    }
+    if (!password || password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' })
+    }
+    if (password.length > 128) {
+      return res.status(400).json({ message: 'Password is too long' })
+    }
+
+    if (await User.findOne({ email: email.toLowerCase().trim() })) {
+      return res.status(400).json({ message: 'Email already in use' })
+    }
+
     const user = await User.create({
-      displayName,
-      email,
+      displayName: displayName.trim(),
+      email: email.toLowerCase().trim(),
       password: await bcrypt.hash(password, 12),
     })
     res.status(201).json({

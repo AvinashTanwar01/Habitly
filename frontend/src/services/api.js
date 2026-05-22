@@ -98,7 +98,7 @@ api.get = function (url, config = {}) {
         const isDifferent = JSON.stringify(res.data) !== JSON.stringify(cached.data)
         cache.set(url, {
           data: res.data,
-          expires: Date.now() + 30000,
+          expires: Date.now() + 5000,
           response: {
             status: res.status,
             statusText: res.statusText,
@@ -123,7 +123,7 @@ api.get = function (url, config = {}) {
   return originalGet.call(this, url, config).then((res) => {
     cache.set(url, {
       data: res.data,
-      expires: Date.now() + 30000,
+      expires: Date.now() + 5000,
       response: {
         status: res.status,
         statusText: res.statusText,

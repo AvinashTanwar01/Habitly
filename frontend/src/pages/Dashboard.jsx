@@ -196,54 +196,136 @@ export default function Dashboard() {
   const uid      = user?._id || user?.id
   const lbTeaser = leaderboard.slice(0, 3)
 
+  // const toggle = async (habit) => {
+  //   const prevHabits = [...habits]
+  //   const nextIsDone = !habit.isDone
+
+  //   // Optimistic UI updates
+  //   const inputAmt = amounts[habit._id]
+  //   const targetAmt = inputAmt !== undefined && inputAmt !== '' ? Number(inputAmt) : Number(habit.target || 1)
+  //   const nextAmt = nextIsDone ? (habit.type === 'yesno' ? 1 : targetAmt) : 0
+
+  //   setHabits((prev) =>
+  //     prev.map((h) =>
+  //       h._id === habit._id
+  //         ? {
+  //             ...h,
+  //             isDone: nextIsDone,
+  //             actualAmount: nextAmt,
+  //             currentStreak: nextIsDone
+  //               ? (h.currentStreak || 0) + 1
+  //               : Math.max(0, (h.currentStreak || 1) - 1),
+  //           }
+  //         : h
+  //     )
+  //   )
+
+  //   if (!nextIsDone) {
+  //     setAmounts((p) => ({ ...p, [habit._id]: '' }))
+  //   }
+
+  //   try {
+  //     if (habit.isDone) {
+  //       await habitService.uncomplete(habit._id, {})
+  //       toast?.info?.(`Unchecked: ${habit.name}`)
+  //     } else {
+  //       await habitService.complete(habit._id, {
+  //         actualAmount: habit.type === 'yesno' ? 1 : targetAmt,
+  //       })
+  //       if (targetAmt >= habit.target) {
+  //         toast?.success?.(`${habit.name} completed — streak growing!`)
+  //       } else {
+  //         toast?.info?.(`Progress logged for ${habit.name}: ${formatValue(targetAmt, habit.type)}/${formatValue(habit.target, habit.type)}`)
+  //       }
+  //     }
+  //   } catch (err) {
+  //     // Revert on error
+  //     setHabits(prevHabits)
+  //     toast?.error?.(err.response?.data?.message || 'Could not update habit')
+  //   }
+  // }
   const toggle = async (habit) => {
-    const prevHabits = [...habits]
-    const nextIsDone = !habit.isDone
+  const prevHabits = [...habits]
+  const nextIsDone = !habit.isDone
 
-    // Optimistic UI updates
-    const inputAmt = amounts[habit._id]
-    const targetAmt = inputAmt !== undefined && inputAmt !== '' ? Number(inputAmt) : Number(habit.target || 1)
-    const nextAmt = nextIsDone ? (habit.type === 'yesno' ? 1 : targetAmt) : 0
+  const inputAmt = amounts[habit._id]
+  const targetAmt = inputAmt !== undefined && inputAmt !== '' ? Number(inputAmt) : Number(habit.target || 1)
 
-    setHabits((prev) =>
-      prev.map((h) =>
-        h._id === habit._id
-          ? {
-              ...h,
-              isDone: nextIsDone,
-              actualAmount: nextAmt,
-              currentStreak: nextIsDone
-                ? (h.currentStreak || 0) + 1
-                : Math.max(0, (h.currentStreak || 1) - 1),
-            }
-          : h
-      )
+  // Optimistically update habits
+  setHabits((prev) =>
+    prev.map((h) =>
+      h._id === habit._id
+        ? {
+            ...h,
+            isDone: nextIsDone,
+            actualAmount: nextIsDone ? (habit.type === 'yesno' ? 1 : targetAmt) : 0,
+            currentStreak: nextIsDone
+              ? (h.currentStreak || 0) + 1
+              : Math.max(0, (h.currentStreak || 1) - 1),
+          }
+        : h
     )
+  )
 
-    if (!nextIsDone) {
-      setAmounts((p) => ({ ...p, [habit._id]: '' }))
-    }
+  // Optimistically update progress ring and week dots immediately
+  const newDone = nextIsDone ? done + 1 : done - 1
+  const newTotal = total
 
-    try {
-      if (habit.isDone) {
-        await habitService.uncomplete(habit._id, {})
-        toast?.info?.(`Unchecked: ${habit.name}`)
-      } else {
-        await habitService.complete(habit._id, {
-          actualAmount: habit.type === 'yesno' ? 1 : targetAmt,
-        })
-        if (targetAmt >= habit.target) {
-          toast?.success?.(`${habit.name} completed — streak growing!`)
-        } else {
-          toast?.info?.(`Progress logged for ${habit.name}: ${formatValue(targetAmt, habit.type)}/${formatValue(habit.target, habit.type)}`)
-        }
-      }
-    } catch (err) {
-      // Revert on error
-      setHabits(prevHabits)
-      toast?.error?.(err.response?.data?.message || 'Could not update habit')
-    }
+  setSummary((prev) => prev ? {
+    ...prev,
+    bestCurrentStreak: nextIsDone
+      ? Math.max(prev.bestCurrentStreak || 0, (habit.currentStreak || 0) + 1)
+      : prev.bestCurrentStreak,
+  } : prev)
+
+  // Optimistically update today's week dot
+  if (todayIdx >= 0) {
+    setWeekly((prev) => {
+      const newThisWeek = [...(prev.thisWeek || [0,0,0,0,0,0,0])]
+      newThisWeek[todayIdx] = nextIsDone
+        ? (newThisWeek[todayIdx] || 0) + 1
+        : Math.max(0, (newThisWeek[todayIdx] || 1) - 1)
+      return { ...prev, thisWeek: newThisWeek }
+    })
   }
+
+  if (!nextIsDone) {
+    setAmounts((p) => ({ ...p, [habit._id]: '' }))
+  }
+
+  try {
+    if (habit.isDone) {
+      await habitService.uncomplete(habit._id, {})
+      toast?.info?.(`Unchecked: ${habit.name}`)
+    } else {
+      await habitService.complete(habit._id, {
+        actualAmount: habit.type === 'yesno' ? 1 : targetAmt,
+      })
+      if (targetAmt >= habit.target) {
+        toast?.success?.(`${habit.name} completed — streak growing!`)
+      } else {
+        toast?.info?.(`Progress logged for ${habit.name}: ${formatValue(targetAmt, habit.type)}/${formatValue(habit.target, habit.type)}`)
+      }
+    }
+
+    // After API confirms, fetch fresh real data in background
+    const [h, s, w] = await Promise.all([
+      habitService.getToday(),
+      statsService.getSummary(),
+      statsService.getWeekly(),
+    ])
+    setHabits(Array.isArray(h) ? h : [])
+    setSummary(s || null)
+    setWeekly(w || {})
+
+  } catch (err) {
+    // Revert everything on error
+    setHabits(prevHabits)
+    setSummary((prev) => prev)
+    setWeekly((prev) => prev)
+    toast?.error?.(err.response?.data?.message || 'Could not update habit')
+  }
+}
 
   if (loading) {
     return (
